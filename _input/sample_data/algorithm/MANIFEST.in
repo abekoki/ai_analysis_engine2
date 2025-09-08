@@ -1,0 +1,8 @@
+exclude __pycache__/*
+recursive-exclude **/__pycache__ *
+recursive-exclude **/*.pyc *
+exclude .coverage
+exclude .pytest_cache/*
+exclude dist/*
+exclude build/*
+exclude *.egg-info/*

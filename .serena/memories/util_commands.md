@@ -1,0 +1,1 @@
+# Utility Commands (Windows)\n\n- List directory: dir\n- Change directory: cd\n- Git status: git status\n- Search text: findstr \"pattern\" file.txt\n- Find files: dir /s /b *pattern*\n- Create venv: uv venv .venv\n- Activate venv: .venv\\Scripts\\activate.bat

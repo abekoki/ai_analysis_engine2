@@ -1,0 +1,1 @@
+# Commands to Run When a Task is Completed\n\n- Run tests: python -m unittest discover\n- Format code: black .\n- Lint code: flake8 .\n- Type check: mypy .\n- Commit changes: git add . && git commit -m \"Completed task\"\n- Push: git push

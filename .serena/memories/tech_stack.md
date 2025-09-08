@@ -1,0 +1,1 @@
+# Tech Stack\n\n- Programming Language: Python 3.11.9\n- Environment Management: uv 0.8.4\n- Frameworks: LangGraph, LangChain\n- LLMs: OpenAI GPT-4o-mini or equivalent\n- Tools: RAG (Retrieval-Augmented Generation), REPL (PythonREPLTool)\n- Libraries: Pandas, NumPy, Matplotlib for data handling and plotting\n- Other: Mermaid for diagrams, Markdown for reports

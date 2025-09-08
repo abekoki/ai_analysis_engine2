@@ -1,0 +1,1 @@
+# Commands for Running Entrypoints\n\n- Main script: (Not yet defined, project is specification-focused)\n- Evaluation: python run_evaluation.py (from sample data)\n- Algorithm: python main.py (from sample algorithm)

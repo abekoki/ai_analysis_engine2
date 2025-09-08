@@ -1,0 +1,1 @@
+# Suggested Commands\n\n- Setup environment: uv venv .venv && .venv\\Scripts\\activate.bat && uv pip install -r requirements.txt\n- Run linter: flake8 .\n- Format code: black .\n- Git commit: git add . && git commit -m \"message\"\n- Read file: type file.txt\n- List files: dir

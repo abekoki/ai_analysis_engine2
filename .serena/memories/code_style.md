@@ -1,0 +1,1 @@
+# Code Style and Conventions\n\n- Follow PEP 8 standards\n- Use type hints for functions and variables\n- Employ docstrings in Google or NumPy style\n- Naming: snake_case for variables/functions, CamelCase for classes\n- Comments: Provide clear explanations for complex logic\n- Imports: Organized at the top, avoid wildcard imports

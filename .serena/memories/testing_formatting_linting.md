@@ -1,0 +1,1 @@
+# Commands for Testing, Formatting, and Linting\n\n- Testing: python -m unittest discover or pytest if set up\n- Formatting: black .\n- Linting: flake8 .
