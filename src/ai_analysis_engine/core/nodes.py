@@ -35,7 +35,7 @@ class InitializationNode:
             if success:
                 # Update state
                 state.vector_stores.is_initialized = True
-                state.vector_stores.segments = list(documents.keys())
+                state.vector_stores.segments = {segment: f"vectorstore_{segment}" for segment in documents.keys()}
                 state.vector_stores.last_updated = datetime.now().isoformat()
 
                 logger.info("Initialization completed successfully")
@@ -56,7 +56,8 @@ class InitializationNode:
         documents = {
             "algorithm_specs": [],
             "evaluation_specs": [],
-            "code": []
+            "algorithm_code": [],
+            "evaluation_code": []
         }
 
         # Add specification documents
@@ -68,10 +69,25 @@ class InitializationNode:
             else:
                 documents["algorithm_specs"].append(spec_doc)
 
-        # Add code documents from datasets
+        # Add code documents
+        for code_doc in state.code_documents:
+            if "algorithm" in code_doc.lower() or code_doc.endswith(('.py', '.cpp', '.java', '.js', '.ts')):
+                documents["algorithm_code"].append(code_doc)
+            else:
+                documents["evaluation_code"].append(code_doc)
+
+        # Add dataset-specific documents
         for dataset in state.datasets:
+            if dataset.algorithm_spec_md:
+                documents["algorithm_specs"].append(dataset.algorithm_spec_md)
             if dataset.evaluation_spec_md:
                 documents["evaluation_specs"].append(dataset.evaluation_spec_md)
+
+            # Add algorithm code files
+            documents["algorithm_code"].extend(dataset.algorithm_code_files)
+
+            # Add evaluation code files
+            documents["evaluation_code"].extend(dataset.evaluation_code_files)
 
         return documents
 
@@ -92,7 +108,14 @@ class SupervisorNode:
             return state
 
         # Determine next step based on dataset status
-        if current_dataset.status == "pending":
+        if current_dataset.status == "failed":
+            # If failed, advance to next dataset
+            state.advance_dataset()
+            if state.get_current_dataset():
+                state.workflow_step = "data_checker"
+            else:
+                state.workflow_step = "completed"
+        elif current_dataset.status == "pending":
             state.workflow_step = "data_checker"
         elif current_dataset.status == "data_checked":
             state.workflow_step = "consistency_checker"
@@ -102,6 +125,13 @@ class SupervisorNode:
             state.workflow_step = "verifier"
         elif current_dataset.status == "verified":
             state.workflow_step = "reporter"
+        elif current_dataset.status == "completed":
+            # Advance to next dataset
+            state.advance_dataset()
+            if state.get_current_dataset():
+                state.workflow_step = "data_checker"
+            else:
+                state.workflow_step = "completed"
         else:
             state.workflow_step = "data_checker"
 
@@ -132,17 +162,35 @@ class DataCheckerNode:
             ]
 
             dataframes = self.repl_tool.load_csv_data(csv_files)
+            logger.info(f"Loaded {len(dataframes)} dataframes: {list(dataframes.keys())}")
 
             # Analyze data
             analysis_results = {}
             for name, df in dataframes.items():
-                analysis_results[name] = self.repl_tool.analyze_dataframe(df, name)
+                try:
+                    logger.info(f"Analyzing dataframe {name} with shape {df.shape}")
+                    analysis_results[name] = self.repl_tool.analyze_dataframe(df, name)
+                except Exception as e:
+                    logger.error(f"Failed to analyze dataframe {name}: {e}")
+                    import traceback
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    analysis_results[name] = {"error": str(e)}
 
             # Create plots
+            logger.info("Creating data plots")
             plot_paths = self._create_data_plots(dataframes, current_dataset.id)
+            logger.info(f"Created plot paths: {plot_paths}")
 
             # Query column information from specs
-            column_info = self._get_column_info_from_specs(current_dataset)
+            logger.info("Getting column information from specs")
+            try:
+                column_info = self._get_column_info_from_specs(current_dataset)
+                logger.info(f"Column info keys: {list(column_info.keys()) if column_info else 'None'}")
+            except Exception as e:
+                logger.error(f"Failed to get column info: {e}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                column_info = {}
 
             # Update dataset state
             current_dataset.data_summary = {
@@ -152,11 +200,28 @@ class DataCheckerNode:
             }
             current_dataset.status = "data_checked"
 
+            # Store analysis results in state for later use
+            logger.info("Storing analysis results in state")
+            try:
+                if not hasattr(state, 'analysis_results'):
+                    state.analysis_results = {}
+                state.analysis_results[current_dataset.id] = {
+                    "analysis": analysis_results,
+                    "plots": plot_paths,
+                    "column_info": column_info
+                }
+                logger.info(f"Successfully stored results for dataset {current_dataset.id}")
+            except Exception as e:
+                logger.error(f"Failed to store analysis results: {e}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
+
             logger.info(f"Data checking completed for dataset {current_dataset.id}")
 
         except Exception as e:
             error_msg = f"Data checking failed: {e}"
             current_dataset.error_message = error_msg
+            current_dataset.status = "failed"
             state.errors.append(error_msg)
             logger.error(error_msg)
 
@@ -239,8 +304,10 @@ plt.tight_layout()
     def _get_column_info_from_specs(self, dataset: DatasetInfo) -> Dict[str, Any]:
         """Get column information from evaluation specifications"""
         try:
+            logger.info("Searching for column information in specs")
             # Search for column-related information
             spec_results = self.rag_tool.search("column format data structure", "evaluation_specs", k=3)
+            logger.info(f"Found {len(spec_results)} spec results")
 
             column_info = {
                 "spec_results": spec_results,
@@ -251,6 +318,8 @@ plt.tight_layout()
 
         except Exception as e:
             logger.error(f"Failed to get column info: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return {}
 
 
@@ -458,6 +527,8 @@ class HypothesisGeneratorNode:
     """Node for generating hypotheses about issues"""
 
     def __init__(self):
+        from ..agents.hypothesis_generator_agent import HypothesisGeneratorAgent
+        self.hypothesis_agent = HypothesisGeneratorAgent()
         self.rag_tool = RAGTool()
 
     def process(self, state: AnalysisState) -> AnalysisState:
@@ -469,18 +540,30 @@ class HypothesisGeneratorNode:
             return state
 
         try:
-            # Generate hypotheses based on data summary and consistency check
-            hypotheses = self._generate_hypotheses(current_dataset)
+            # Get analysis results and consistency check from state/dataset
+            analysis_results = getattr(state, 'analysis_results', {}).get(current_dataset.id, {})
+            consistency_check = current_dataset.consistency_check if current_dataset.consistency_check else {}
+
+            # Generate hypotheses using HypothesisGeneratorAgent
+            hypotheses = self.hypothesis_agent.generate_hypotheses(
+                current_dataset, analysis_results, consistency_check
+            )
 
             # Update dataset state
             current_dataset.hypotheses = hypotheses
             current_dataset.status = "hypothesis_generated"
+
+            # Store hypotheses in state for later use
+            if not hasattr(state, 'hypotheses'):
+                state.hypotheses = {}
+            state.hypotheses[current_dataset.id] = hypotheses
 
             logger.info(f"Generated {len(hypotheses)} hypotheses for dataset {current_dataset.id}")
 
         except Exception as e:
             error_msg = f"Hypothesis generation failed: {e}"
             current_dataset.error_message = error_msg
+            current_dataset.status = "failed"
             state.errors.append(error_msg)
             logger.error(error_msg)
 
@@ -516,7 +599,8 @@ class VerifierNode:
     """Node for verifying hypotheses through testing"""
 
     def __init__(self):
-        self.repl_tool = REPLTool()
+        from ..agents.verifier_agent import VerifierAgent
+        self.verifier_agent = VerifierAgent()
         self.max_iterations = config.langgraph.max_iterations
 
     def process(self, state: AnalysisState) -> AnalysisState:
@@ -528,15 +612,25 @@ class VerifierNode:
             return state
 
         try:
-            # Verify each hypothesis
+            # Verify each hypothesis using VerifierAgent
             verification_results = []
 
             for hypothesis in current_dataset.hypotheses or []:
-                result = self._verify_hypothesis(hypothesis, current_dataset)
+                if hasattr(hypothesis, 'model_dump'):  # Pydantic model
+                    # Convert Hypothesis object to dict for compatibility
+                    hypothesis_dict = hypothesis.model_dump()
+                    result = self.verifier_agent.verify_hypothesis(current_dataset, hypothesis)
+                else:
+                    # Legacy dict format
+                    result = self._verify_hypothesis(hypothesis, current_dataset)
+
                 verification_results.append(result)
 
                 # Check if we should continue or stop
-                if result.get("success"):
+                if hasattr(result, 'success'):
+                    if result.success:
+                        break
+                elif isinstance(result, dict) and result.get("success"):
                     break
 
             # Update dataset state
@@ -601,6 +695,10 @@ class VerifierNode:
 class ReporterNode:
     """Node for generating final reports"""
 
+    def __init__(self):
+        from ..agents.reporter_agent import ReporterAgent
+        self.reporter_agent = ReporterAgent()
+
     def process(self, state: AnalysisState) -> AnalysisState:
         """Generate report for current dataset"""
         logger.info("Reporter processing")
@@ -610,8 +708,14 @@ class ReporterNode:
             return state
 
         try:
-            # Generate report
-            report_content = self._generate_report(current_dataset)
+            # Get analysis results and hypotheses from state
+            analysis_results = state.analysis_results.get(current_dataset.id, {}) if hasattr(state, 'analysis_results') else {}
+            hypotheses = state.hypotheses.get(current_dataset.id, []) if hasattr(state, 'hypotheses') and isinstance(state.hypotheses, dict) else []
+
+            # Generate report using ReporterAgent
+            report_content = self.reporter_agent.generate_report(
+                current_dataset, analysis_results, hypotheses
+            )
 
             # Update dataset state
             current_dataset.report_content = report_content
@@ -629,140 +733,3 @@ class ReporterNode:
             logger.error(error_msg)
 
         return state
-
-    def _generate_report(self, dataset: DatasetInfo) -> str:
-        """Generate markdown report for the dataset"""
-        # Extract detection results
-        cc = dataset.consistency_check or {}
-        interval = cc.get("target_interval") or {}
-        detection = (cc.get("detection") or {})
-        exists = detection.get("exists", False)
-        eye_stats = cc.get("eye_openness_stats", {})
-        start_f = interval.get("start")
-        end_f = interval.get("end")
-
-        # Frame interval
-        frame_interval = f"{start_f}-{end_f}" if start_f is not None and end_f is not None else "不明"
-
-        # Expected result
-        expected = "連続閉眼あり" if cc.get("require_exists", False) else "連続閉眼なし"
-
-        # Detection result
-        detection_result = "連続閉眼あり" if exists else "連続閉眼なし"
-
-        # Determine conclusion from verification
-        conclusion = "分析完了"
-        causes = []
-        evidence = []
-        if dataset.verification_results:
-            last = dataset.verification_results[-1]
-            causes = last.get("causes", [])
-            evidence = last.get("evidence", [])
-            if causes:
-                # Remove duplicates and format conclusion
-                unique_causes = list(set(causes))
-                conclusion = " or ".join(unique_causes)
-
-        # Plots
-        plots = (dataset.data_summary or {}).get("plots", {})
-        algo_plot = None
-        core_plot = None
-        # heuristic: pick plot whose filename stem matches algo/core characteristics
-        for name, path in plots.items():
-            if algo_plot is None and (name == '2' or 'algo' in name.lower() or 'is_drowsy' in name.lower()):
-                algo_plot = path
-            if core_plot is None and ('openness' in name.lower() or 'analysis' in name.lower() or name.startswith('WIN_')):
-                core_plot = path
-        # fallback: first/second
-        if not algo_plot and plots:
-            algo_plot = list(plots.values())[0]
-        if not core_plot and len(plots) > 1:
-            core_plot = list(plots.values())[1]
-
-        # Build evidence text from eye stats
-        evidence_text = ""
-        if eye_stats:
-            for col, stats in eye_stats.items():
-                mean_val = stats.get("mean", 1.0)
-                evidence_text += f"task中の{col}が{mean_val}程度になっており、"
-                if mean_val < 0.3:
-                    evidence_text += "閉眼傾向が見られない。"
-                else:
-                    evidence_text += "閉眼傾向が見られる。"
-        elif evidence:
-            evidence_text = " ".join(evidence)
-
-        lines = [
-            f"# 個別データ分析レポート - {dataset.id}",
-            "",
-            "## 概要",
-            "",
-            f"- 結論: {conclusion}",
-            f"- 解析対象動画: {dataset.id}",
-            f"- フレーム区間: {frame_interval}",
-            f"- 期待値: {expected}",
-            f"- 検知結果: {detection_result}",
-            "",
-            "## 確認結果",
-            "",
-        ]
-
-        if algo_plot:
-            lines += [
-                "![アルゴリズム出力結果のグラフ](output/plots/test_drowsy_detection/2_timeseries.png)",
-                "アルゴリズム出力結果",
-                f"<!-- 対象区間{frame_interval}における閉眼検知状態の時系列グラフ -->",
-                "",
-            ]
-
-        if core_plot:
-            lines += [
-                "![コア出力結果のグラフ](output/plots/test_drowsy_detection/WIN_20250819_10_12_55_Pro_analysis_timeseries.png)",
-                "コア出力結果",
-                f"<!-- 対象区間{frame_interval}におけるleye_openness, reye_opennessの時系列グラフ -->",
-                "",
-            ]
-
-        lines += [
-            "<!-- 上記のグラフを生成後、閉眼傾向があるかを仮説検証にて確認し、結果を以下に記載 -->",
-        ]
-
-        if evidence_text:
-            lines += [f"- 入出力の確認結果: {evidence_text}", ""]
-
-        # Add possible causes (remove duplicates)
-        unique_causes = list(set(causes)) if causes else []
-        if unique_causes:
-            for i, cause in enumerate(unique_causes, 1):
-                lines.append(f"- 考えられる原因{i}: {cause}")
-        else:
-            lines.append("- 考えられる原因: 仕様通り動作")
-
-        lines += [
-            "",
-            "## 推奨事項",
-            "",
-        ]
-
-        # Generate recommendations based on causes
-        unique_causes_str = str(unique_causes) if unique_causes else ""
-
-        if "被験者が閉眼していない" in unique_causes_str:
-            lines.append("- 被験者のタスク不正により正しく閉眼していない可能性があります。まずは動画を確認してください。")
-            if "コアの検出機能に問題がある" in unique_causes_str:
-                lines.append("- もし閉眼をしている場合は、コアの検出機能に問題がある可能性があります。")
-        elif "コアの検出機能に問題がある" in unique_causes_str:
-            lines.append("- コアの検出機能に問題がある可能性があります。検出精度の検証を行ってください。")
-        elif "閾値設定ミス" in unique_causes_str:
-            lines.append("- 閾値設定ミスの可能性があります。アルゴリズムの閾値パラメータを見直してください。")
-        else:
-            lines.append("- 分析結果に基づく推奨事項")
-
-        lines += [
-            "",
-            "## 参照した仕様/コード（抜粋）",
-            "... <!-- 仮説検証にて参照した仕様/コードを記載-->",
-            "",
-        ]
-
-        return "\n".join(lines)

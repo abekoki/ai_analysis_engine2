@@ -39,10 +39,15 @@ class DataCheckerAgent:
         ]
 
         self.prompt = ChatPromptTemplate.from_template("""
-あなたはデータ確認エージェントです。与えられたデータセットを分析し、問題点を特定してください。
+あなたはデータ確認エージェントです。与えられたデータセットを分析し、アルゴリズム仕様に基づいて問題点を特定してください。
+
+【重要】アルゴリズム仕様をまず理解し、その仕様に基づいてデータを分析してください。
 
 データセット情報:
 {dataset_info}
+
+アルゴリズム仕様:
+{algorithm_spec}
 
 評価環境仕様:
 {evaluation_spec}
@@ -50,17 +55,23 @@ class DataCheckerAgent:
 期待値:
 {expected_result}
 
-以下の観点からデータを分析してください：
-1. データの構造と品質
-2. 列の意味とフォーマット
-3. 欠損値や異常値の確認
-4. 時系列データの連続性
-5. 仕様との整合性
+【分析アプローチ】
+1. **アルゴリズム仕様の理解**: 入力パラメータ、出力形式、判定ロジックを理解する
+2. **データ構造分析**: CSVファイルの列が仕様と一致するか確認
+3. **データ品質確認**: 欠損値、異常値、データ型の妥当性
+4. **仕様準拠確認**: データがアルゴリズム仕様に沿っているか検証
+5. **出力分析**: アルゴリズム出力が仕様通りのロジックで生成されているか確認
 
-分析結果を詳細に報告してください。
+【特に注目すべき点】
+- アルゴリズムの入力パラメータ（例: 開眼度、信頼度）とCSV列の対応関係
+- 判定閾値と実際のデータ分布の整合性
+- エラーパターンと仕様書のエラーハンドリングの一致
+- 出力値の妥当性と仕様書の定義範囲
+
+分析結果を詳細に報告し、仕様との不整合点を明確に指摘してください。
 
 利用可能なツール:
-- rag_search: 仕様書の検索
+- rag_search: 仕様書の検索（アルゴリズム仕様を優先）
 - analyze_data: データ分析
 - create_plot: グラフ作成
 """)
@@ -77,6 +88,15 @@ class DataCheckerAgent:
         """
         try:
             logger.info(f"Starting data analysis for dataset {dataset.id}")
+
+            # Load algorithm spec
+            algorithm_spec = ""
+            if dataset.algorithm_spec_md:
+                try:
+                    with open(dataset.algorithm_spec_md, 'r', encoding='utf-8') as f:
+                        algorithm_spec = f.read()
+                except Exception as e:
+                    logger.warning(f"Failed to load algorithm spec: {e}")
 
             # Load evaluation spec
             evaluation_spec = ""
@@ -95,6 +115,7 @@ class DataCheckerAgent:
 
             response = chain.invoke({
                 "dataset_info": dataset_info,
+                "algorithm_spec": algorithm_spec[:3000],  # Limit size, prioritize algorithm spec
                 "evaluation_spec": evaluation_spec[:2000],  # Limit size
                 "expected_result": dataset.expected_result
             })
@@ -159,13 +180,30 @@ class DataCheckerAgent:
     def _create_rag_search_tool(self):
         """Create RAG search tool"""
         @tool
-        def rag_search(query: str, segment: str = "evaluation_specs") -> str:
-            """Search specification documents for relevant information"""
+        def rag_search(query: str, segment: str = "algorithm_specs") -> str:
+            """Search specification documents for relevant information, prioritizing algorithm specs"""
             try:
-                results = self.rag_tool.search(query, segment, k=3)
+                # Try algorithm specs first, then evaluation specs
+                results = []
+                segments_to_search = ["algorithm_specs", "evaluation_specs"] if segment == "algorithm_specs" else [segment]
+
+                for seg in segments_to_search:
+                    try:
+                        seg_results = self.rag_tool.search(query, seg, k=2)
+                        results.extend(seg_results)
+                    except:
+                        continue
+
+                if not results:
+                    return "No relevant information found in specifications"
+
+                # Sort by score and return top results
+                results.sort(key=lambda x: x['score'], reverse=True)
+                top_results = results[:5]
+
                 return "\n\n".join([
                     f"Content: {r['content']}\nSource: {r['source']}\nScore: {r['score']:.3f}"
-                    for r in results
+                    for r in top_results
                 ])
             except Exception as e:
                 return f"Search failed: {e}"

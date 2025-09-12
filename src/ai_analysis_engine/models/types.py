@@ -10,6 +10,7 @@ from enum import Enum
 class HypothesisType(str, Enum):
     """Types of hypotheses that can be generated"""
     SPEC_INCONSISTENCY = "spec_inconsistency"
+    SPECIFICATION_INCONSISTENCY = "specification_inconsistency"
     PARAMETER_INAPPROPRIATE = "parameter_inappropriate"
     UNEXPECTED_BEHAVIOR = "unexpected_behavior"
     DATA_QUALITY_ISSUE = "data_quality_issue"

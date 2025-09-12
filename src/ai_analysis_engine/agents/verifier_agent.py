@@ -33,26 +33,41 @@ class VerifierAgent:
         self.max_iterations = config.langgraph.max_iterations
 
         self.prompt = ChatPromptTemplate.from_template("""
-あなたは検証エージェントです。与えられた仮説をテストして検証してください。
+あなたは検証エージェントです。アルゴリズム仕様に基づいて仮説をテストして検証してください。
+
+【重要】アルゴリズム仕様を理解し、その仕様に基づいて仮説を検証してください。
 
 データセット情報:
 {dataset_info}
+
+アルゴリズム仕様:
+{algorithm_spec}
+
+評価環境仕様:
+{evaluation_spec}
 
 仮説:
 {hypothesis_description}
 
 仮説タイプ: {hypothesis_type}
 信頼度: {confidence_score}
+仕様関連: {spec_reference}
 
-検証すべきこと:
-1. 仮説の妥当性テスト
-2. 証拠の確認
-3. 代替説明の検討
-4. テスト結果の解釈
+【アルゴリズム仕様に基づく検証アプローチ】
+1. **仕様理解**: アルゴリズムの判定ロジックとパラメータを把握
+2. **仮説の仕様準拠確認**: 仮説がアルゴリズム仕様と矛盾しないか確認
+3. **データ検証**: 実際のデータで仮説をテスト
+4. **仕様ベースの評価**: 結果をアルゴリズム仕様に基づいて評価
 
-Pythonコードを使って検証を行い、結果を評価してください。
+【検証時の注目点】
+- アルゴリズムの判定閾値を列挙し、各閾値と出力結果について確認
+- アルゴリズムの計算ロジックを確認
+- エラーコードと仕様書のエラーハンドリング
+- 入力データの有効範囲と実際の値の比較
 
-検証結果を報告してください。
+Pythonコードを使って仕様に基づいた検証を行い、結果を評価してください。
+
+検証結果を詳細に報告し、アルゴリズム仕様との関連を明確にしてください。
 """)
 
     def verify_hypothesis(self, dataset: DatasetInfo, hypothesis: Hypothesis) -> VerificationResult:
@@ -68,6 +83,24 @@ Pythonコードを使って検証を行い、結果を評価してください�
         """
         try:
             logger.info(f"Verifying hypothesis {hypothesis.id} for dataset {dataset.id}")
+
+            # Load algorithm spec
+            algorithm_spec = ""
+            if dataset.algorithm_spec_md:
+                try:
+                    with open(dataset.algorithm_spec_md, 'r', encoding='utf-8') as f:
+                        algorithm_spec = f.read()
+                except Exception as e:
+                    logger.warning(f"Failed to load algorithm spec: {e}")
+
+            # Load evaluation spec
+            evaluation_spec = ""
+            if dataset.evaluation_spec_md:
+                try:
+                    with open(dataset.evaluation_spec_md, 'r', encoding='utf-8') as f:
+                        evaluation_spec = f.read()
+                except Exception as e:
+                    logger.warning(f"Failed to load evaluation spec: {e}")
 
             # Prepare verification context
             dataset_info = self._prepare_dataset_info(dataset)
@@ -116,44 +149,149 @@ Pythonコードを使って検証を行い、結果を評価してください�
         return "\n".join(info_lines)
 
     def _generate_verification_code(self, hypothesis: Hypothesis, dataset: DatasetInfo) -> str:
-        """Generate Python code to verify the hypothesis"""
+        """Generate Python code to verify the hypothesis based on algorithm specifications"""
         # Load data
         code_lines = [
-            "# Load data for verification",
+            "# Load data for verification based on drowsy detection algorithm specs",
             f"import pandas as pd",
+            f"import numpy as np",
             f"algo_df = pd.read_csv('{dataset.algorithm_output_csv}')",
-            f"core_df = pd.read_csv('{dataset.core_output_csv}')"
+            f"core_df = pd.read_csv('{dataset.core_output_csv}')",
+            "",
+            "# Algorithm specifications from drowsy_detection spec",
+            "# left_eye_close_threshold: 0.10",
+            "# right_eye_close_threshold: 0.10",
+            "# face_conf_threshold: 0.75",
+            "# continuous_close_time: 1.00 seconds",
+            "LEFT_EYE_THRESHOLD = 0.10",
+            "RIGHT_EYE_THRESHOLD = 0.10",
+            "FACE_CONF_THRESHOLD = 0.75",
+            "CONTINUOUS_CLOSE_TIME = 1.0",
+            ""
         ]
 
         # Add hypothesis-specific verification code
         if hypothesis.type.value == "data_quality_issue":
             code_lines.extend([
-                "# Check data quality",
+                "# Check data quality according to algorithm specifications",
+                "print('=== Data Quality Check ===')",
                 "print('Algorithm DF shape:', algo_df.shape)",
                 "print('Core DF shape:', core_df.shape)",
                 "print('Missing values in algorithm:', algo_df.isnull().sum().sum())",
                 "print('Missing values in core:', core_df.isnull().sum().sum())",
-                "# Result: Check if data quality issues exist"
+                "",
+                "# Check if required columns exist (based on algorithm spec)",
+                "required_algo_cols = ['frame_num', 'is_drowsy']",
+                "required_core_cols = ['leye_openness', 'reye_openness']",
+                "",
+                "missing_algo_cols = [col for col in required_algo_cols if col not in algo_df.columns]",
+                "missing_core_cols = [col for col in required_core_cols if col not in core_df.columns]",
+                "",
+                "if missing_algo_cols:",
+                "    print('Missing algorithm columns:', missing_algo_cols)",
+                "if missing_core_cols:",
+                "    print('Missing core columns:', missing_core_cols)",
+                "",
+                "# Check data value ranges (based on algorithm spec)",
+                "print('\\n=== Value Range Check ===')",
+                "if 'is_drowsy' in algo_df.columns:",
+                "    valid_values = algo_df['is_drowsy'].isin([-1, 0, 1]).all()",
+                "    print('is_drowsy values valid (-1,0,1):', valid_values)",
+                "",
+                "# Check eye openness ranges (should be 0.0-1.0)",
+                "eye_cols = ['leye_openness', 'reye_openness']",
+                "for col in eye_cols:",
+                "    if col in core_df.columns:",
+                "        valid_range = (core_df[col] >= 0.0) & (core_df[col] <= 1.0)",
+                "        print(f'{col} in valid range [0,1]: {valid_range.all()}')",
+                "",
+                "# Result: Data quality assessment"
             ])
 
-        elif hypothesis.type.value == "consistency_issue":
+        elif hypothesis.type.value == "consistency_issue" or hypothesis.type.value == "specification_inconsistency":
             code_lines.extend([
-                "# Check consistency",
+                "# Check consistency with algorithm specifications",
+                "print('=== Algorithm Specification Consistency Check ===')",
+                "",
+                "# Check column alignment with spec",
                 "print('Algorithm columns:', list(algo_df.columns))",
                 "print('Core columns:', list(core_df.columns))",
-                "common_cols = set(algo_df.columns) & set(core_df.columns)",
-                "print('Common columns:', common_cols)",
-                "# Result: Check column consistency"
+                "",
+                "# Verify algorithm output logic (based on spec)",
+                "if all(col in algo_df.columns for col in ['frame_num', 'is_drowsy']):",
+                "    print('\\n=== Algorithm Output Validation ===')",
+                "    # Check if error states (-1) correlate with missing face confidence",
+                "    error_frames = algo_df[algo_df['is_drowsy'] == -1]",
+                "    print(f'Frames with error state (-1): {len(error_frames)}')",
+                "    ",
+                "    # Check drowsy detection distribution",
+                "    drowsy_dist = algo_df['is_drowsy'].value_counts()",
+                "    print('\\nDrowsy detection distribution:')",
+                "    print(drowsy_dist)",
+                "",
+                "# Check eye state logic (based on spec)",
+                "if all(col in core_df.columns for col in ['leye_openness', 'reye_openness']):",
+                "    print('\\n=== Eye State Logic Validation ===')",
+                "    # Calculate expected eye closure states",
+                "    left_closed = core_df['leye_openness'] <= LEFT_EYE_THRESHOLD",
+                "    right_closed = core_df['reye_openness'] <= RIGHT_EYE_THRESHOLD",
+                "    both_closed = left_closed & right_closed",
+                "    ",
+                "    print(f'Left eye closed frames: {left_closed.sum()}')",
+                "    print(f'Right eye closed frames: {right_closed.sum()}')",
+                "    print(f'Both eyes closed frames: {both_closed.sum()}')",
+                "",
+                "# Result: Specification consistency assessment"
+            ])
+
+        elif hypothesis.type.value == "algorithm_bug":
+            code_lines.extend([
+                "# Check for algorithm bugs based on specifications",
+                "print('=== Algorithm Bug Detection ===')",
+                "",
+                "# Check continuous time calculation (based on spec)",
+                "if 'continuous_time' in algo_df.columns:",
+                "    print('\\n=== Continuous Time Analysis ===')",
+                "    continuous_stats = algo_df['continuous_time'].describe()",
+                "    print('Continuous time statistics:')",
+                "    print(continuous_stats)",
+                "    ",
+                "    # Check for unrealistic continuous times",
+                "    unrealistic_times = algo_df[algo_df['continuous_time'] > CONTINUOUS_CLOSE_TIME * 2]",
+                "    print(f'Frames with unrealistic continuous time: {len(unrealistic_times)}')",
+                "",
+                "# Check state transitions (based on spec)",
+                "if 'is_drowsy' in algo_df.columns:",
+                "    print('\\n=== State Transition Analysis ===')",
+                "    # Check for invalid state transitions",
+                "    state_changes = algo_df['is_drowsy'].diff().fillna(0)",
+                "    invalid_transitions = state_changes.abs() > 1  # Should only change by -1, 0, or 1",
+                "    print(f'Invalid state transitions: {invalid_transitions.sum()}')",
+                "",
+                "# Result: Algorithm bug assessment"
             ])
 
         else:
-            # Generic verification
+            # Generic verification with spec-aware checks
             code_lines.extend([
-                "# Generic verification",
-                "print('Basic data info')",
-                "print('Algo shape:', algo_df.shape)",
-                "print('Core shape:', core_df.shape)",
-                "# Result: Basic data validation"
+                "# Generic verification with algorithm specification awareness",
+                "print('=== General Verification with Spec Context ===')",
+                "print('Algorithm DF shape:', algo_df.shape)",
+                "print('Core DF shape:', core_df.shape)",
+                "",
+                "# Basic spec compliance check",
+                "spec_compliant = True",
+                "if 'is_drowsy' in algo_df.columns:",
+                "    valid_range = algo_df['is_drowsy'].isin([-1, 0, 1]).all()",
+                "    print(f'Algorithm output in valid range: {valid_range}')",
+                "    spec_compliant &= valid_range",
+                "",
+                "eye_cols_present = all(col in core_df.columns for col in ['leye_openness', 'reye_openness'])",
+                "print(f'Required eye columns present: {eye_cols_present}')",
+                "spec_compliant &= eye_cols_present",
+                "",
+                "print(f'Overall spec compliance: {spec_compliant}')",
+                "# Result: General specification-aware validation"
             ])
 
         return "\n".join(code_lines)

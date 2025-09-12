@@ -12,7 +12,10 @@ class DatasetInfo(BaseModel):
     id: str = Field(..., description="Unique identifier for the dataset")
     algorithm_output_csv: str = Field(..., description="Path to algorithm output CSV")
     core_output_csv: str = Field(..., description="Path to core library output CSV")
+    algorithm_spec_md: str = Field(..., description="Path to algorithm specification Markdown")
+    algorithm_code_files: List[str] = Field(default_factory=list, description="Paths to algorithm implementation code files")
     evaluation_spec_md: str = Field(..., description="Path to evaluation specification Markdown")
+    evaluation_code_files: List[str] = Field(default_factory=list, description="Paths to evaluation environment code files")
     expected_result: str = Field(..., description="Natural language description of expected results")
 
     # Processing state
@@ -29,7 +32,7 @@ class DatasetInfo(BaseModel):
 
 class VectorStoreInfo(BaseModel):
     """Information about vector stores"""
-    segments: Dict[str, str] = Field(default_factory=dict, description="Segment name to path mapping")
+    segments: Dict[str, Any] = Field(default_factory=dict, description="Segment name to path mapping")
     last_updated: Optional[str] = Field(default=None, description="Last update timestamp")
     is_initialized: bool = Field(default=False, description="Whether vector stores are initialized")
 
@@ -50,7 +53,8 @@ class AnalysisState(BaseModel):
     next_action: Optional[str] = Field(default=None, description="Next action to take")
 
     # Results
-    analysis_results: List[Dict[str, Any]] = Field(default_factory=list, description="Analysis results for each dataset")
+    analysis_results: Dict[str, Any] = Field(default_factory=dict, description="Analysis results for each dataset")
+    hypotheses: Dict[str, Any] = Field(default_factory=dict, description="Generated hypotheses for each dataset")
     final_reports: List[str] = Field(default_factory=list, description="Generated report contents")
 
     # Error handling
@@ -62,6 +66,7 @@ class AnalysisState(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+        extra = 'allow'  # Allow extra fields to be set dynamically
 
     def get_current_dataset(self) -> Optional[DatasetInfo]:
         """Get the currently processing dataset"""

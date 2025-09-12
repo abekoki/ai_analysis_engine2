@@ -32,10 +32,18 @@ class ConsistencyCheckerAgent:
         self.repl_tool = REPLTool()
 
         self.prompt = ChatPromptTemplate.from_template("""
-あなたは整合性チェックエージェントです。データと仕様の整合性を確認してください。
+あなたは整合性チェックエージェントです。アルゴリズム仕様に基づいてデータと期待値の整合性を確認してください。
+
+【重要】アルゴリズム仕様を理解し、その仕様に基づいて整合性をチェックしてください。
 
 データセット情報:
 {dataset_info}
+
+アルゴリズム仕様:
+{algorithm_spec}
+
+評価環境仕様:
+{evaluation_spec}
 
 期待値（自然言語）:
 {expected_result}
@@ -43,14 +51,21 @@ class ConsistencyCheckerAgent:
 データ分析結果:
 {data_analysis}
 
-以下の観点から整合性をチェックしてください：
-1. 期待値の解釈と実際のデータパターン
-2. フレーム範囲の一致
-3. 値の分布と期待される動作
-4. 時系列データの連続性
-5. 仕様書との整合性
+【整合性チェックアプローチ】
+1. **アルゴリズム仕様の理解**: 入力パラメータ、判定ロジック、出力形式を把握
+2. **期待値の解釈**: 自然言語の期待値をアルゴリズム仕様に基づいて具体的な条件に変換
+3. **データ整合性**: CSVデータの構造と値が仕様に準拠しているか確認
+4. **アルゴリズム出力検証**: 出力が仕様通りのロジックで生成されているか確認
+5. **エラーパターン分析**: エラーコードと仕様書のエラーハンドリングの整合性
 
-不整合が見つかった場合は、具体的に報告してください。
+【特に注目すべき点】
+- アルゴリズムの判定閾値と実際のデータ分布の整合性
+- 入力パラメータの有効範囲と実際の値の比較
+- 出力値（is_drowsy, error_code）の妥当性
+- 計算ロジックと実際のcsv出力内容の一致
+- 各種指標の閾値とエラーの発生パターン
+
+不整合点を具体的に指摘し、仕様に基づいた改善提案を行ってください。
 
 整合性チェック結果を詳細に報告してください。
 """)
@@ -69,6 +84,24 @@ class ConsistencyCheckerAgent:
         try:
             logger.info(f"Starting consistency check for dataset {dataset.id}")
 
+            # Load algorithm spec
+            algorithm_spec = ""
+            if dataset.algorithm_spec_md:
+                try:
+                    with open(dataset.algorithm_spec_md, 'r', encoding='utf-8') as f:
+                        algorithm_spec = f.read()
+                except Exception as e:
+                    logger.warning(f"Failed to load algorithm spec: {e}")
+
+            # Load evaluation spec
+            evaluation_spec = ""
+            if dataset.evaluation_spec_md:
+                try:
+                    with open(dataset.evaluation_spec_md, 'r', encoding='utf-8') as f:
+                        evaluation_spec = f.read()
+                except Exception as e:
+                    logger.warning(f"Failed to load evaluation spec: {e}")
+
             # Prepare dataset info
             dataset_info = self._prepare_dataset_info(dataset)
 
@@ -85,6 +118,8 @@ class ConsistencyCheckerAgent:
 
             response = chain.invoke({
                 "dataset_info": dataset_info,
+                "algorithm_spec": algorithm_spec[:3000],  # Prioritize algorithm spec
+                "evaluation_spec": evaluation_spec[:2000],
                 "expected_result": dataset.expected_result,
                 "data_analysis": str(data_analysis)[:2000]  # Limit size
             })

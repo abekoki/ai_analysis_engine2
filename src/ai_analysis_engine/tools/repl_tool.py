@@ -128,10 +128,19 @@ class REPLTool:
             Dictionary with analysis results
         """
         try:
+            # Safe dtype conversion
+            dtypes_dict = {}
+            try:
+                for col in df.columns:
+                    dtypes_dict[col] = str(df[col].dtype)
+            except Exception as e:
+                logger.warning(f"Failed to get dtypes: {e}")
+                dtypes_dict = {}
+
             analysis = {
                 'shape': df.shape,
                 'columns': list(df.columns),
-                'dtypes': df.dtypes.to_dict(),
+                'dtypes': dtypes_dict,
                 'missing_values': df.isnull().sum().to_dict(),
                 'basic_stats': {}
             }

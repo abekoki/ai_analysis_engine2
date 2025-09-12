@@ -41,6 +41,18 @@ def main():
     core_output = base_path / "コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv"
     algorithm_output = base_path / "アルゴリズム出力結果/2.csv"
 
+    # Algorithm code files
+    algorithm_codes = [
+        str(base_path / "algorithm/src/drowsy_detection/__init__.py"),
+        str(base_path / "algorithm/src/drowsy_detection/drowsy_detector.py"),
+        str(base_path / "algorithm/src/drowsy_detection/eye_state.py")
+    ]
+
+    # Evaluation code files
+    evaluation_codes = [
+        str(base_path / "evaluation_engine/main.py")
+    ]
+
     # Check if files exist
     missing_files = []
     for file_path in [algorithm_spec, evaluation_spec, core_output, algorithm_output]:
@@ -63,8 +75,11 @@ def main():
         state = engine.create_analysis_request(
             algorithm_outputs=[str(algorithm_output)],
             core_outputs=[str(core_output)],
+            algorithm_specs=[str(algorithm_spec)],
             evaluation_specs=[str(evaluation_spec)],
             expected_results=["フレーム100-200の間に値1が存在すること"],
+            algorithm_codes=[algorithm_codes],
+            evaluation_codes=[evaluation_codes],
             dataset_ids=["test_drowsy_detection"]
         )
 

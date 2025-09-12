@@ -56,8 +56,11 @@ class AIAnalysisEngine:
     def create_analysis_request(self,
                               algorithm_outputs: List[str],
                               core_outputs: List[str],
+                              algorithm_specs: List[str],
                               evaluation_specs: List[str],
                               expected_results: List[str],
+                              algorithm_codes: Optional[List[List[str]]] = None,
+                              evaluation_codes: Optional[List[List[str]]] = None,
                               dataset_ids: Optional[List[str]] = None) -> AnalysisState:
         """
         Create an analysis request from input files
@@ -65,8 +68,11 @@ class AIAnalysisEngine:
         Args:
             algorithm_outputs: List of algorithm output CSV files
             core_outputs: List of core library output CSV files
+            algorithm_specs: List of algorithm specification Markdown files
             evaluation_specs: List of evaluation specification Markdown files
             expected_results: List of expected results (natural language)
+            algorithm_codes: Optional list of lists containing algorithm implementation code files
+            evaluation_codes: Optional list of lists containing evaluation environment code files
             dataset_ids: Optional list of dataset IDs
 
         Returns:
@@ -80,23 +86,46 @@ class AIAnalysisEngine:
         for i, (algo_csv, core_csv, expected) in enumerate(zip(algorithm_outputs, core_outputs, expected_results)):
             dataset_id = dataset_ids[i] if dataset_ids else f"dataset_{i+1}"
 
-            # Find corresponding evaluation spec
+            # Find corresponding specs and codes
+            algo_spec = algorithm_specs[i] if i < len(algorithm_specs) else (algorithm_specs[0] if algorithm_specs else None)
             eval_spec = evaluation_specs[i] if i < len(evaluation_specs) else (evaluation_specs[0] if evaluation_specs else None)
+            algo_codes = algorithm_codes[i] if algorithm_codes is not None and i < len(algorithm_codes) else []
+            eval_codes = evaluation_codes[i] if evaluation_codes is not None and i < len(evaluation_codes) else []
 
             dataset = DatasetInfo(
                 id=dataset_id,
                 algorithm_output_csv=algo_csv,
                 core_output_csv=core_csv,
+                algorithm_spec_md=algo_spec,
+                algorithm_code_files=algo_codes,
                 evaluation_spec_md=eval_spec,
+                evaluation_code_files=eval_codes,
                 expected_result=expected
             )
 
             datasets.append(dataset)
 
+        # Collect all spec and code documents
+        all_spec_docs = []
+        all_code_docs = []
+
+        if algorithm_specs:
+            all_spec_docs.extend(algorithm_specs)
+        if evaluation_specs:
+            all_spec_docs.extend(evaluation_specs)
+
+        if algorithm_codes is not None:
+            for code_list in algorithm_codes:
+                all_code_docs.extend(code_list)
+        if evaluation_codes is not None:
+            for code_list in evaluation_codes:
+                all_code_docs.extend(code_list)
+
         # Create initial state
         state = AnalysisState(
             datasets=datasets,
-            spec_documents=evaluation_specs,
+            spec_documents=all_spec_docs,
+            code_documents=all_code_docs,
             start_time=self._get_current_time()
         )
 
@@ -159,15 +188,36 @@ class AIAnalysisEngine:
         except Exception as e:
             self.logger.error(f"Failed to save reports: {e}")
 
-        # Save main results (JSON) - with error handling
+        # Save main results (JSON) - with enhanced error handling
         try:
             # Convert results to JSON serializable format
             serializable_results = self._make_serializable(results)
 
+            # Additional check for any remaining non-serializable objects
+            def check_serializable(obj, path="root"):
+                if isinstance(obj, dict):
+                    for key, value in obj.items():
+                        check_serializable(value, f"{path}.{key}")
+                elif isinstance(obj, list):
+                    for i, item in enumerate(obj):
+                        check_serializable(item, f"{path}[{i}]")
+                else:
+                    try:
+                        json.dumps(obj)
+                    except (TypeError, ValueError) as e:
+                        self.logger.warning(f"Non-serializable object at {path}: {type(obj)} - {e}")
+                        # Replace with string representation
+                        if isinstance(obj, dict) and path != "root":
+                            parent_path = ".".join(path.split(".")[:-1])
+                            key = path.split(".")[-1]
+                            # This is a simplified replacement - in practice, we'd need to traverse up the tree
+
+            check_serializable(serializable_results)
+
             # Save main results
             results_file = output_dir / "analysis_results.json"
             with open(results_file, 'w', encoding='utf-8') as f:
-                json.dump(serializable_results, f, indent=2, ensure_ascii=False)
+                json.dump(serializable_results, f, indent=2, ensure_ascii=False, default=str)
 
             self.logger.info(f"JSON results saved to {results_file}")
 
@@ -217,15 +267,44 @@ class AIAnalysisEngine:
                 return obj
             except (TypeError, ValueError):
                 # Handle special pandas/numpy types
-                if 'DType' in str(type(obj)) or 'dtype' in str(type(obj)).lower():
-                    return str(obj)
-                # Handle numpy types
-                if hasattr(obj, 'item'):
-                    try:
-                        return obj.item()
-                    except:
+                type_str = str(type(obj))
+                if 'DType' in type_str or 'dtype' in type_str.lower():
+                    # Handle pandas DType objects more specifically
+                    if hasattr(obj, 'name'):
+                        return obj.name
+                    elif hasattr(obj, 'type'):
+                        return str(obj.type)
+                    elif hasattr(obj, 'kind'):
+                        return obj.kind
+                    else:
+                        # For complex DType objects, try to get a simple representation
+                        try:
+                            return str(obj).split('(')[0]  # Get just the type name
+                        except:
+                            return f"<{type(obj).__name__}>"
+                elif 'numpy' in type_str:
+                    # Handle numpy types
+                    if hasattr(obj, 'item'):
+                        try:
+                            return obj.item()
+                        except:
+                            return str(obj)
+                    elif hasattr(obj, 'tolist'):
+                        try:
+                            return obj.tolist()
+                        except:
+                            return str(obj)
+                    else:
                         return str(obj)
-                return str(obj)
+                elif hasattr(obj, '__class__'):
+                    # Handle other complex objects
+                    try:
+                        return str(obj)
+                    except:
+                        return f"<{obj.__class__.__name__} object>"
+                else:
+                    # Fallback for unknown objects
+                    return str(obj)
 
     def _get_current_time(self) -> str:
         """Get current timestamp"""
@@ -252,8 +331,14 @@ def main():
                        help="Algorithm output CSV files")
     parser.add_argument("--core-outputs", nargs="+", required=True,
                        help="Core library output CSV files")
+    parser.add_argument("--algorithm-specs", nargs="+", required=True,
+                       help="Algorithm specification Markdown files")
+    parser.add_argument("--algorithm-codes", nargs="*", action="append",
+                       help="Algorithm implementation code files (can be specified multiple times)")
     parser.add_argument("--evaluation-specs", nargs="+", required=True,
                        help="Evaluation specification Markdown files")
+    parser.add_argument("--evaluation-codes", nargs="*", action="append",
+                       help="Evaluation environment code files (can be specified multiple times)")
     parser.add_argument("--expected-results", nargs="+", required=True,
                        help="Expected results (natural language)")
     parser.add_argument("--dataset-ids", nargs="+",
@@ -272,12 +357,24 @@ def main():
         return 1
 
     try:
+        # Process code arguments (convert from list of lists to proper format)
+        algorithm_codes = None
+        if args.algorithm_codes:
+            algorithm_codes = [code_list for code_list in args.algorithm_codes if code_list]
+
+        evaluation_codes = None
+        if args.evaluation_codes:
+            evaluation_codes = [code_list for code_list in args.evaluation_codes if code_list]
+
         # Create analysis request
         state = engine.create_analysis_request(
             algorithm_outputs=args.algorithm_outputs,
             core_outputs=args.core_outputs,
+            algorithm_specs=args.algorithm_specs,
             evaluation_specs=args.evaluation_specs,
             expected_results=args.expected_results,
+            algorithm_codes=algorithm_codes,
+            evaluation_codes=evaluation_codes,
             dataset_ids=args.dataset_ids
         )
 

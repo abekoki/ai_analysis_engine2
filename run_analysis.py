@@ -37,13 +37,18 @@ def main():
         if sample_data_dir.exists():
             print("📊 Sample data found, running analysis...")
 
-            # Use sample data for testing
+            # Use sample data for testing - aligned with test_dataset.md
             state = engine.create_analysis_request(
-                algorithm_outputs=[str(sample_data_dir / "test_input.json")],  # This might need adjustment
-                core_outputs=[str(Path("_input/sample_data/evaluation_engine/core_lib_output_sample.csv"))],
-                evaluation_specs=[str(sample_data_dir / "01_algorithm_specification/AS_drowsy_detection.md")],
-                expected_results=["フレーム100-200に値1が存在すること"],
-                dataset_ids=["sample_dataset"]
+                algorithm_outputs=[str(Path("_input/sample_data/アルゴリズム出力結果/2.csv"))],
+                core_outputs=[str(Path("_input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv"))],
+                algorithm_specs=[str(sample_data_dir / "01_algorithm_specification/AS_drowsy_detection.md")],
+                evaluation_specs=[str(Path("_input/sample_data/evaluation_engine/docs/EVALUATION_SPEC.md"))],
+                expected_results=["フレーム区間465-593の間に「連続閉眼あり」が存在すること"],
+                algorithm_codes=[[str(sample_data_dir / "src/drowsy_detection/__init__.py"),
+                                str(sample_data_dir / "src/drowsy_detection/drowsy_detector.py"),
+                                str(sample_data_dir / "src/drowsy_detection/eye_state.py")]],
+                evaluation_codes=[[str(Path("_input/sample_data/evaluation_engine/main.py"))]],
+                dataset_ids=["test_dataset"]
             )
 
             results = engine.run_analysis(state)
