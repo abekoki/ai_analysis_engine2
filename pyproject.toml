@@ -1,0 +1,28 @@
+[project]
+name = "ai-analysis-engine"
+version = "0.1.0"
+description = "時系列処理アルゴリズムの課題分析システム - AIを用いた自動分析プラットフォーム"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "langgraph>=0.1.0",
+    "langchain>=0.2.0",
+    "langchain-openai",
+    "langchain-community",
+    "faiss-cpu",
+    "pandas",
+    "matplotlib",
+    "seaborn",
+    "openai",
+    "python-dotenv",
+    "tiktoken",
+    "pydantic>=2.0.0",
+    "typing-extensions",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ai_analysis_engine"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
