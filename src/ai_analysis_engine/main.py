@@ -141,30 +141,91 @@ class AIAnalysisEngine:
 
     def _save_results(self, results: Dict[str, Any]) -> None:
         """Save analysis results to files"""
+        output_dir = config.output_dir / "results"
+        output_dir.mkdir(exist_ok=True)
+
+        # Save individual reports first (independent of JSON saving)
         try:
-            output_dir = config.output_dir / "results"
-            output_dir.mkdir(exist_ok=True)
-
-            # Save main results
-            results_file = output_dir / "analysis_results.json"
-            with open(results_file, 'w', encoding='utf-8') as f:
-                json.dump(results, f, indent=2, ensure_ascii=False)
-
-            # Save individual reports
             if "datasets" in results:
                 reports_dir = output_dir / "reports"
                 reports_dir.mkdir(exist_ok=True)
 
                 for dataset in results["datasets"]:
-                    if dataset.get("report_content"):
-                        report_file = reports_dir / f"{dataset['id']}_report.md"
+                    if hasattr(dataset, 'report_content') and dataset.report_content and hasattr(dataset, 'id'):
+                        report_file = reports_dir / f"{dataset.id}_report.md"
                         with open(report_file, 'w', encoding='utf-8') as f:
-                            f.write(dataset["report_content"])
+                            f.write(dataset.report_content)
+                        self.logger.info(f"Report saved: {report_file}")
+        except Exception as e:
+            self.logger.error(f"Failed to save reports: {e}")
 
-            self.logger.info(f"Results saved to {output_dir}")
+        # Save main results (JSON) - with error handling
+        try:
+            # Convert results to JSON serializable format
+            serializable_results = self._make_serializable(results)
+
+            # Save main results
+            results_file = output_dir / "analysis_results.json"
+            with open(results_file, 'w', encoding='utf-8') as f:
+                json.dump(serializable_results, f, indent=2, ensure_ascii=False)
+
+            self.logger.info(f"JSON results saved to {results_file}")
 
         except Exception as e:
-            self.logger.error(f"Failed to save results: {e}")
+            self.logger.error(f"Failed to save JSON results: {e}")
+            # Save a minimal error report
+            try:
+                error_file = output_dir / "error_summary.json"
+                error_summary = {
+                    "error": str(e),
+                    "timestamp": self._get_current_time(),
+                    "datasets_count": len(results.get("datasets", []))
+                }
+                with open(error_file, 'w', encoding='utf-8') as f:
+                    json.dump(error_summary, f, indent=2, ensure_ascii=False)
+                self.logger.info(f"Error summary saved to {error_file}")
+            except Exception as e2:
+                self.logger.error(f"Failed to save error summary: {e2}")
+
+        self.logger.info(f"Results processing completed in {output_dir}")
+
+    def _make_serializable(self, obj: Any) -> Any:
+        """Convert objects to JSON serializable format"""
+        if isinstance(obj, dict):
+            return {key: self._make_serializable(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [self._make_serializable(item) for item in obj]
+        elif hasattr(obj, 'model_dump'):  # Pydantic models
+            return obj.model_dump()
+        elif hasattr(obj, '__dict__'):  # Regular objects
+            return {key: self._make_serializable(value) for key, value in obj.__dict__.items() if not key.startswith('_')}
+        elif hasattr(obj, 'dtype'):  # pandas/numpy dtypes
+            if hasattr(obj.dtype, 'name'):
+                return obj.dtype.name
+            else:
+                return str(obj.dtype)
+        elif hasattr(obj, 'to_dict'):  # pandas objects
+            try:
+                return obj.to_dict()
+            except:
+                return str(obj)
+        else:
+            # Try to convert to basic types
+            try:
+                import json
+                json.dumps(obj)
+                return obj
+            except (TypeError, ValueError):
+                # Handle special pandas/numpy types
+                if 'DType' in str(type(obj)) or 'dtype' in str(type(obj)).lower():
+                    return str(obj)
+                # Handle numpy types
+                if hasattr(obj, 'item'):
+                    try:
+                        return obj.item()
+                    except:
+                        return str(obj)
+                return str(obj)
 
     def _get_current_time(self) -> str:
         """Get current timestamp"""

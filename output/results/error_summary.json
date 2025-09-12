@@ -1,0 +1,5 @@
+{
+  "error": "Object of type Int64DType is not JSON serializable",
+  "timestamp": "2025-09-12T11:44:27.981317",
+  "datasets_count": 1
+}
