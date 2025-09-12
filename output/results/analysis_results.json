@@ -2,10 +2,10 @@
   "datasets": [
     {
       "id": "test_drowsy_detection",
-      "algorithm_output_csv": "_input\\sample_data\\アルゴリズム出力結果\\2.csv",
-      "core_output_csv": "_input\\sample_data\\コアライブラリ出力結果\\WIN_20250819_10_12_55_Pro_analysis.csv",
-      "evaluation_spec_md": "_input\\sample_data\\evaluation_engine\\docs\\EVALUATION_SPEC.md",
-      "expected_result": "フレーム100-200の間に値1が存在すること",
+      "algorithm_output_csv": "_input/sample_data/アルゴリズム出力結果/2.csv",
+      "core_output_csv": "_input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv",
+      "evaluation_spec_md": "_input/sample_data/evaluation_engine/docs/EVALUATION_SPEC.md",
+      "expected_result": "フレーム区間465-593の間に「連続閉眼あり」が存在すること",
       "data_summary": {
         "analysis": {
           "2": {

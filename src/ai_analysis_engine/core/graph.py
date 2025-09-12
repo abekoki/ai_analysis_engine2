@@ -150,16 +150,7 @@ class AnalysisGraph:
         """
         current_dataset = state.get_current_dataset()
 
-        if current_dataset and current_dataset.verification_results:
-            # Check if any verification result indicates success
-            latest_result = current_dataset.verification_results[-1]
-            if latest_result.get("success", False):
-                return "reporter"
-            else:
-                # Need to generate new hypothesis
-                return "hypothesis_generator"
-
-        # Default to reporter if no results
+        # Report regardless of success to avoid infinite loops; the report will reflect outcome
         return "reporter"
 
     def run_analysis(self, initial_state: Dict[str, Any]) -> Dict[str, Any]:
