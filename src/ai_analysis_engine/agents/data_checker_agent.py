@@ -39,9 +39,20 @@ class DataCheckerAgent:
         ]
 
         self.prompt = ChatPromptTemplate.from_template("""
-あなたはデータ確認エージェントです。与えられたデータセットを分析し、アルゴリズム仕様に基づいて問題点を特定してください。
+あなたは汎用データ確認エージェントです。解析手順詳細.mdの「1. 分析の準備」に基づいて、アルゴリズム仕様を理解し、データセットを分析します。
 
-【重要】アルゴリズム仕様をまず理解し、その仕様に基づいてデータを分析してください。
+【解析手順詳細に基づく分析アプローチ】
+1. **評価指標の明確化**: 自然言語で定義された評価指標を具体化
+2. **CSVデータの構造確認**: 列の確認とアルゴリズム仕様との対応
+3. **対象評価区間の特定**: 解析対象区間をCSVから抽出
+4. **未検知の定義**: 未検知（FN）の基準を設定
+
+【アルゴリズム仕様に基づく分析項目】
+- **入力パラメータ確認**: {input_columns}とCSV列の対応関係
+- **出力形式検証**: {output_columns}の妥当性確認
+- **閾値設定検証**: {thresholds}とデータ分布の整合性
+- **データ品質評価**: 欠損値、異常値、範囲チェック
+- **信頼度条件確認**: 検知結果が有効となるための前提条件の検証
 
 データセット情報:
 {dataset_info}
@@ -55,20 +66,19 @@ class DataCheckerAgent:
 期待値:
 {expected_result}
 
-【分析アプローチ】
-1. **アルゴリズム仕様の理解**: 入力パラメータ、出力形式、判定ロジックを理解する
-2. **データ構造分析**: CSVファイルの列が仕様と一致するか確認
-3. **データ品質確認**: 欠損値、異常値、データ型の妥当性
-4. **仕様準拠確認**: データがアルゴリズム仕様に沿っているか検証
-5. **出力分析**: アルゴリズム出力が仕様通りのロジックで生成されているか確認
+【仕様準拠確認ポイント】
+- 必須列の存在確認: {required_columns}
+- データ値範囲の妥当性: {value_ranges}
+- 有効値の確認: {valid_values}
+- 時間軸の連続性と欠損確認
 
-【特に注目すべき点】
-- アルゴリズムの入力パラメータ（例: 開眼度、信頼度）とCSV列の対応関係
-- 判定閾値と実際のデータ分布の整合性
-- エラーパターンと仕様書のエラーハンドリングの一致
-- 出力値の妥当性と仕様書の定義範囲
+【分析結果の構造化】
+1. **データ構造分析**: 列構成、データ型、サイズ
+2. **品質メトリクス**: 欠損率、異常値分布、外れ値検出
+3. **仕様準拠度**: 仕様との一致度合い
+4. **潜在的問題**: 検知精度に影響する可能性のある問題点
 
-分析結果を詳細に報告し、仕様との不整合点を明確に指摘してください。
+分析結果を詳細に報告し、解析手順詳細の次のステップ（未検知データの抽出）につなげる情報を提供してください。
 
 利用可能なツール:
 - rag_search: 仕様書の検索（アルゴリズム仕様を優先）
@@ -78,7 +88,7 @@ class DataCheckerAgent:
 
     def analyze_data(self, dataset: DatasetInfo) -> Dict[str, Any]:
         """
-        Analyze the given dataset
+        Analyze the given dataset using dynamic algorithm configuration
 
         Args:
             dataset: Dataset to analyze
@@ -89,7 +99,10 @@ class DataCheckerAgent:
         try:
             logger.info(f"Starting data analysis for dataset {dataset.id}")
 
-            # Load algorithm spec
+            # Load algorithm configuration dynamically
+            algorithm_config = self._load_algorithm_config(dataset)
+
+            # Load specifications
             algorithm_spec = ""
             if dataset.algorithm_spec_md:
                 try:
@@ -98,7 +111,6 @@ class DataCheckerAgent:
                 except Exception as e:
                     logger.warning(f"Failed to load algorithm spec: {e}")
 
-            # Load evaluation spec
             evaluation_spec = ""
             if dataset.evaluation_spec_md:
                 try:
@@ -110,14 +122,18 @@ class DataCheckerAgent:
             # Prepare dataset info
             dataset_info = self._prepare_dataset_info(dataset)
 
+            # Prepare algorithm-specific context
+            algorithm_context = self._prepare_algorithm_context(algorithm_config)
+
             # Use LLM with tools for analysis
             chain = self.prompt | self.llm.bind_tools(self.tools)
 
             response = chain.invoke({
                 "dataset_info": dataset_info,
-                "algorithm_spec": algorithm_spec[:3000],  # Limit size, prioritize algorithm spec
-                "evaluation_spec": evaluation_spec[:2000],  # Limit size
-                "expected_result": dataset.expected_result
+                "algorithm_spec": algorithm_spec[:3000],
+                "evaluation_spec": evaluation_spec[:2000],
+                "expected_result": dataset.expected_result,
+                **algorithm_context
             })
 
             # Process tool calls if any
@@ -127,8 +143,11 @@ class DataCheckerAgent:
                 results = {"llm_analysis": response.content}
 
             # Add basic data analysis
-            basic_analysis = self._perform_basic_analysis(dataset)
+            basic_analysis = self._perform_basic_analysis(dataset, algorithm_config)
             results.update(basic_analysis)
+
+            # Add algorithm configuration info
+            results["algorithm_config"] = algorithm_config.model_dump()
 
             logger.info(f"Data analysis completed for dataset {dataset.id}")
             return results
@@ -136,6 +155,45 @@ class DataCheckerAgent:
         except Exception as e:
             logger.error(f"Data analysis failed: {e}")
             return {"error": str(e)}
+
+    def _load_algorithm_config(self, dataset: DatasetInfo):
+        """
+        Load algorithm configuration from dataset specification
+
+        Args:
+            dataset: Dataset information
+
+        Returns:
+            AlgorithmConfig: Loaded configuration
+        """
+        if dataset.algorithm_spec_md:
+            try:
+                return config.load_algorithm_config_from_file(dataset.algorithm_spec_md)
+            except Exception as e:
+                logger.warning(f"Failed to load algorithm config from file: {e}")
+
+        # Return default configuration
+        from ..config.config import AlgorithmConfig
+        return AlgorithmConfig()
+
+    def _prepare_algorithm_context(self, algorithm_config) -> Dict[str, Any]:
+        """
+        Prepare algorithm-specific context for LLM
+
+        Args:
+            algorithm_config: AlgorithmConfig object
+
+        Returns:
+            Dictionary with algorithm context
+        """
+        return {
+            "input_columns": algorithm_config.input_columns,
+            "output_columns": algorithm_config.output_columns,
+            "required_columns": algorithm_config.required_columns,
+            "thresholds": algorithm_config.thresholds,
+            "value_ranges": algorithm_config.value_ranges,
+            "valid_values": algorithm_config.valid_values
+        }
 
     def _prepare_dataset_info(self, dataset: DatasetInfo) -> str:
         """Prepare dataset information for LLM"""
@@ -149,8 +207,17 @@ class DataCheckerAgent:
 
         return "\n".join(info_lines)
 
-    def _perform_basic_analysis(self, dataset: DatasetInfo) -> Dict[str, Any]:
-        """Perform basic data analysis"""
+    def _perform_basic_analysis(self, dataset: DatasetInfo, algorithm_config=None) -> Dict[str, Any]:
+        """
+        Perform basic data analysis with algorithm-specific validation
+
+        Args:
+            dataset: Dataset to analyze
+            algorithm_config: AlgorithmConfig for validation
+
+        Returns:
+            Dictionary with analysis results
+        """
         try:
             # Load CSV files
             csv_files = [dataset.algorithm_output_csv, dataset.core_output_csv]
@@ -160,7 +227,7 @@ class DataCheckerAgent:
 
             for name, df in dataframes.items():
                 if len(df) > 0:
-                    analysis[name] = {
+                    basic_info = {
                         "shape": df.shape,
                         "columns": list(df.columns),
                         "dtypes": df.dtypes.to_dict(),
@@ -168,6 +235,13 @@ class DataCheckerAgent:
                         "missing_values": df.isnull().sum().to_dict(),
                         "sample_data": df.head(5).to_dict('records')
                     }
+
+                    # Add algorithm-specific validation if config available
+                    if algorithm_config:
+                        validation = self._validate_algorithm_compliance(df, algorithm_config, name)
+                        basic_info["algorithm_validation"] = validation
+
+                    analysis[name] = basic_info
                 else:
                     analysis[name] = {"error": "Empty or failed to load dataframe"}
 
@@ -176,6 +250,72 @@ class DataCheckerAgent:
         except Exception as e:
             logger.error(f"Basic analysis failed: {e}")
             return {"basic_analysis_error": str(e)}
+
+    def _validate_algorithm_compliance(self, df, algorithm_config, file_type: str) -> Dict[str, Any]:
+        """
+        Validate dataframe compliance with algorithm specifications
+
+        Args:
+            df: DataFrame to validate
+            algorithm_config: AlgorithmConfig for validation
+            file_type: Type of file (algorithm/core)
+
+        Returns:
+            Dictionary with validation results
+        """
+        validation = {
+            "column_compliance": {},
+            "value_range_compliance": {},
+            "valid_values_compliance": {},
+            "threshold_compliance": {}
+        }
+
+        # Check required columns
+        if file_type == "algorithm_output":
+            required_cols = algorithm_config.output_columns + algorithm_config.required_columns
+        else:
+            required_cols = algorithm_config.input_columns + algorithm_config.required_columns
+
+        for col in required_cols:
+            if col in df.columns:
+                validation["column_compliance"][col] = "present"
+            else:
+                validation["column_compliance"][col] = "missing"
+
+        # Check value ranges
+        for col, ranges in algorithm_config.value_ranges.items():
+            if col in df.columns:
+                min_val = ranges.get("min", float('-inf'))
+                max_val = ranges.get("max", float('inf'))
+                out_of_range = ((df[col] < min_val) | (df[col] > max_val)).sum()
+                validation["value_range_compliance"][col] = {
+                    "out_of_range_count": int(out_of_range),
+                    "total_count": len(df),
+                    "percentage": float(out_of_range / len(df) * 100) if len(df) > 0 else 0
+                }
+
+        # Check valid values
+        for col, valid_vals in algorithm_config.valid_values.items():
+            if col in df.columns:
+                invalid_count = (~df[col].isin(valid_vals)).sum()
+                validation["valid_values_compliance"][col] = {
+                    "invalid_count": int(invalid_count),
+                    "total_count": len(df),
+                    "percentage": float(invalid_count / len(df) * 100) if len(df) > 0 else 0
+                }
+
+        # Check threshold compliance for numeric columns
+        for col in df.select_dtypes(include=['number']).columns:
+            if col in algorithm_config.thresholds:
+                threshold = algorithm_config.thresholds[col]
+                above_threshold = (df[col] > threshold).sum()
+                validation["threshold_compliance"][col] = {
+                    "above_threshold_count": int(above_threshold),
+                    "threshold_value": threshold,
+                    "percentage": float(above_threshold / len(df) * 100) if len(df) > 0 else 0
+                }
+
+        return validation
 
     def _create_rag_search_tool(self):
         """Create RAG search tool"""

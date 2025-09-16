@@ -29,12 +29,16 @@ class Hypothesis(BaseModel):
     """A hypothesis about the cause of an issue"""
     id: str = Field(..., description="Unique identifier")
     type: HypothesisType = Field(..., description="Type of hypothesis")
+    category: str = Field(default="unknown", description="Category: data, algorithm, or context")
     description: str = Field(..., description="Detailed description")
     confidence_score: float = Field(..., description="Confidence score (0-1)")
     evidence: List[str] = Field(default_factory=list, description="Supporting evidence")
+    spec_reference: Optional[str] = Field(default=None, description="Reference to algorithm specification")
+    analysis_step: Optional[str] = Field(default=None, description="Related analysis step from detailed procedure")
     verification_status: VerificationStatus = Field(default=VerificationStatus.PENDING)
     verification_result: Optional[str] = Field(default=None, description="Result of verification")
     suggested_fix: Optional[str] = Field(default=None, description="Suggested fix or mitigation")
+    expected_impact: Optional[str] = Field(default=None, description="Expected impact of the fix")
 
 
 class VerificationResult(BaseModel):

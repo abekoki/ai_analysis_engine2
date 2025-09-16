@@ -18,6 +18,7 @@ dependencies = [
     "tiktoken",
     "pydantic>=2.0.0",
     "typing-extensions",
+    "pyyaml>=6.0.2",
 ]
 
 [tool.hatch.build.targets.wheel]

@@ -1,34 +1,38 @@
-# AI Analysis Engine
+# 汎用AI分析エンジン (Generic AI Analysis Engine)
 
-時系列処理アルゴリズムの課題分析システム - AIを用いた自動分析プラットフォーム
+様々なアルゴリズムに対応した汎用AI分析プラットフォーム - 仕様書ベースの自動分析・診断システム
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## 📋 概要
 
-AI Analysis Engineは、時系列データを扱うアルゴリズムの課題をAIによって自動的に分析・診断するシステムです。LangGraphをベースとした多段階分析ワークフローにより、データの品質チェック、整合性検証、問題仮説生成・検証、レポート作成までを自動化します。
+汎用AI分析エンジンは、様々なアルゴリズムの仕様書を読み込み、動的に分析ワークフローを構築・実行する高度なAI分析システムです。LangGraphベースの多段階分析プロセスにより、データの品質チェック、整合性検証、問題仮説生成・検証、構造化レポート作成までを完全に自動化します。
 
 ### 🎯 主な目的
 
-- **自動化された課題分析**: 時系列データの品質・性能問題をAIが自動検出
-- **多角的な検証**: RAG + REPLツールによる仕様書照合と実データ検証
-- **構造化レポート**: 問題特定から解決提案までを含む詳細レポート生成
-- **拡張性**: 複数データセットの逐次処理とスケーラブルなアーキテクチャ
+- **汎用アルゴリズム対応**: 眠気検知、物体検知、姿勢推定などあらゆるアルゴリズムに対応
+- **動的設定抽出**: 仕様書から閾値・列名・評価基準を自動抽出
+- **最適化された可視化**: アルゴリズム仕様に基づく適切なプロット生成
+- **ユーザビリティ重視**: 直感的にわかりやすいレポートと改善提案
+- **拡張性**: 複数データセットの一括処理とスケーラブルなアーキテクチャ
 
 ## ✨ 主な機能
 
-### 🔍 分析機能
+### 🔍 動的分析機能
+- **仕様書自動解析**: Markdown仕様書から動的に閾値・列名・評価基準を抽出
+- **アルゴリズム適応**: 眠気検知、物体検知、姿勢推定などあらゆるアルゴリズムに対応
 - **データ品質チェック**: CSVデータの構造・欠損値・統計分析
 - **整合性検証**: 仕様書との整合性チェック（自然言語期待値対応）
-- **仮説生成**: AIによる問題原因の仮説生成
+- **仮説生成**: AIによる問題原因の仮説生成（アルゴリズム固有用語を排除）
 - **仮説検証**: Pythonコード実行による実データ検証
-- **レポート生成**: Markdown形式の構造化レポート
+- **最適化レポート**: ユーザーに直感的にわかりやすい構造化レポート生成
 
 ### 🛠️ 技術機能
 - **RAG (Retrieval-Augmented Generation)**: 仕様書のベクトル化検索
-- **REPL (Read-Eval-Print Loop)**: Pythonコード実行環境
+- **REPL (Read-Eval-Print Loop)**: Pythonコード実行と動的プロット生成
 - **LangGraphワークフロー**: 多段階分析プロセスの制御
+- **動的可視化**: 仕様書ベースの適切なプロット生成（レポートと同じ階層配置）
 - **複数データセット処理**: 逐次分析によるスケーラビリティ
 
 ## 🚀 インストール
@@ -64,22 +68,23 @@ export OPENAI_API_KEY="your-api-key-here"
 
 ### コマンドラインオプション
 
-AI Analysis Engineは以下の実行方法をサポートしています：
+汎用AI分析エンジンは以下の実行方法をサポートしています：
 
-#### 1. テスト実行（推奨）
+#### 1. 汎用テスト実行（推奨）
 ```bash
-# 付属のテストデータで動作確認
-uv run python test_engine.py
+# 汎用AI分析エンジンの動作確認（動的設定抽出テスト）
+uv run python test_generic_system.py
 ```
 
-#### 2. メイン実行スクリプト
+#### 2. 動的分析実行
 ```bash
-# 基本的な分析実行
+# アルゴリズム仕様書から自動設定抽出して分析実行
 uv run python run_analysis.py \
   --algorithm-outputs data/algo_output.csv \
   --core-outputs data/core_output.csv \
+  --algorithm-specs docs/algo_spec.md \
   --evaluation-specs docs/eval_spec.md \
-  --expected-results "フレーム100-200の間に値1が存在すること"
+  --expected-results "指定された条件を満たすデータが存在すること"
 ```
 
 #### 3. メインアプリケーション直接実行
@@ -263,20 +268,22 @@ frame,timestamp,leye_openness,reye_openness,head_pose_x,head_pose_y
 
 ### 実際の使用例
 
-#### 例1: 単一データセットの閉眼検知分析
+#### 例1: 単一アルゴリズムの汎用分析
 ```bash
-# 閉眼検知アルゴリズムの分析
+# あらゆるアルゴリズムの仕様書ベース汎用分析
 uv run python run_analysis.py \
   --algorithm-outputs "_input/sample_data/アルゴリズム出力結果/2.csv" \
   --core-outputs "_input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv" \
   --algorithm-specs "_input/sample_data/algorithm/01_algorithm_specification/AS_drowsy_detection.md" \
-  --algorithm-codes "_input/sample_data/algorithm/src/drowsy_detection/__init__.py" \
-    "_input/sample_data/algorithm/src/drowsy_detection/drowsy_detector.py" \
   --evaluation-specs "_input/sample_data/evaluation_engine/docs/EVALUATION_SPEC.md" \
-  --evaluation-codes "_input/sample_data/evaluation_engine/main.py" \
-  --expected-results "フレーム区間465-593の間に「連続閉眼あり」が存在すること" \
-  --dataset-ids "drowsy_detection_test"
+  --expected-results "指定された評価区間内で期待される結果が得られること" \
+  --dataset-ids "generic_analysis_test"
 ```
+
+**特徴:**
+- アルゴリズム仕様書から自動的に閾値・列名を抽出
+- 動的に最適なプロット生成
+- ユーザーに直感的にわかりやすいレポート作成
 
 #### 例2: 複数データセットの一括分析
 ```bash
@@ -458,24 +465,38 @@ if __name__ == "__main__":
 
 ### テスト実行
 ```bash
-# 全テスト実行
+# ⭐ 汎用AI分析エンジンのテスト実行（推奨）
+uv run python test_generic_system.py
+
+# 従来のテスト実行
 uv run python test_engine.py
 
 # 特定のデータセットでテスト
 uv run python -c "
 from ai_analysis_engine import AIAnalysisEngine
+from ai_analysis_engine.config.config import Config
+
+# 設定ファイルを読み込んで汎用分析を実行
+config = Config()
 engine = AIAnalysisEngine()
-engine.initialize()
-# テストコード
+if engine.initialize():
+    print('汎用AI分析エンジン初期化成功')
+    # テストコード
 "
 ```
 
 ### テストデータ
 プロジェクトには以下のテストデータが含まれています：
-- `_input/sample_data/algorithm/` - アルゴリズム仕様書
+- `_input/sample_data/algorithm/` - アルゴリズム仕様書（動的設定抽出用）
 - `_input/sample_data/evaluation_engine/` - 評価環境仕様
 - `_input/sample_data/アルゴリズム出力結果/` - アルゴリズム出力CSV
 - `_input/sample_data/コアライブラリ出力結果/` - コアライブラリ出力CSV
+
+**新機能テスト:**
+- `test_generic_system.py` - 汎用AI分析エンジンの包括的テスト
+- 仕様書からの動的設定抽出テスト
+- 最適化されたプロット生成テスト
+- ユーザビリティ改善レポート生成テスト
 
 ## 📁 プロジェクト構造
 
@@ -484,9 +505,9 @@ ai-analysis-engine/
 ├── src/ai_analysis_engine/
 │   ├── __init__.py          # パッケージ初期化
 │   ├── main.py              # メインアプリケーション
-│   ├── config/              # 設定管理
+│   ├── config/              # ⭐ 動的設定管理
 │   │   ├── __init__.py
-│   │   └── config.py        # 設定クラス
+│   │   └── config.py        # ⭐ アルゴリズム仕様書からの動的設定抽出
 │   ├── models/              # データモデル
 │   │   ├── __init__.py
 │   │   ├── state.py         # LangGraph状態モデル
@@ -495,18 +516,18 @@ ai-analysis-engine/
 │   │   ├── __init__.py
 │   │   ├── graph.py         # メイングラフ
 │   │   └── nodes.py         # ワークフロー各ノード
-│   ├── agents/              # AIエージェント
+│   ├── agents/              # ⭐ AIエージェント（汎用化）
 │   │   ├── __init__.py
-│   │   ├── supervisor_agent.py
-│   │   ├── data_checker_agent.py
-│   │   ├── consistency_checker_agent.py
-│   │   ├── hypothesis_generator_agent.py
-│   │   ├── verifier_agent.py
-│   │   └── reporter_agent.py
-│   ├── tools/               # ユーティリティツール
+│   │   ├── supervisor_agent.py      # 監督エージェント
+│   │   ├── data_checker_agent.py    # データ検証エージェント
+│   │   ├── consistency_checker_agent.py  # 整合性検証エージェント
+│   │   ├── hypothesis_generator_agent.py # ⭐ 汎用仮説生成エージェント
+│   │   ├── verifier_agent.py        # 検証エージェント
+│   │   └── reporter_agent.py        # ⭐ 動的可視化・最適化レポート生成
+│   ├── tools/               # ⭐ 拡張ユーティリティツール
 │   │   ├── __init__.py
 │   │   ├── rag_tool.py      # RAG検索ツール
-│   │   └── repl_tool.py     # Python実行ツール
+│   │   └── repl_tool.py     # ⭐ 動的プロット生成対応REPLツール
 │   └── utils/               # ユーティリティ関数
 │       ├── __init__.py
 │       ├── logger.py        # ログ管理
@@ -514,10 +535,16 @@ ai-analysis-engine/
 │       └── text_utils.py    # テキスト処理
 ├── tests/                   # テストファイル
 ├── docs/                    # ドキュメント
-├── output/                  # 出力結果
+├── _input/                  # ⭐ テストデータ・仕様書
+│   └── sample_data/         # サンプルデータセット
+├── output/                  # ⭐ 最適化された出力構造
+│   └── results/
+│       └── reports/
+│           └── plots/       # ⭐ レポートと同じ階層にプロット配置
 ├── logs/                    # ログファイル
 ├── pyproject.toml           # プロジェクト設定
-├── test_engine.py           # テスト実行スクリプト
+├── test_engine.py           # 従来テスト実行スクリプト
+├── test_generic_system.py   # ⭐ 汎用AI分析エンジン専用テスト
 ├── run_analysis.py          # 実行スクリプト
 └── README.md               # このファイル
 ```
@@ -665,11 +692,13 @@ output/
 │   └── reports/
 │       ├── dataset_1_report.md        # 個別データセットレポート
 │       ├── dataset_2_report.md        # 個別データセットレポート
-│       └── ...
-├── plots/
-│   └── dataset_1/
-│       ├── 2_timeseries.png           # 時系列グラフ
-│       └── WIN_20250819_10_12_55_Pro_analysis_timeseries.png
+│       └── plots/                     # ⭐ レポートと同じ階層にプロット配置
+│           ├── dataset_1/
+│           │   ├── algorithm_output_plot.png    # アルゴリズム出力プロット
+│           │   └── core_output_plot.png         # コア入力プロット
+│           └── dataset_2/
+│               ├── algorithm_output_plot.png
+│               └── core_output_plot.png
 └── ...
 ```
 
@@ -677,27 +706,44 @@ output/
 
 #### Markdownレポート（dataset_X_report.md）
 
-各データセットごとに以下の構造のレポートが生成されます：
+各データセットごとに以下の構造の汎用レポートが生成されます：
 
 ```markdown
 # 個別データ分析レポート - [データセットID]
 
 ## 概要
-- 結論: [AIによる分析結論]
+- 結論: [考えられる原因を整理したユーザーに直感的にわかりやすい内容]
 - 解析対象動画: [データセットID]
 - フレーム区間: [分析対象区間]
 - 期待値: [期待される動作]
 - 検知結果: [実際の検知結果]
 
 ## 確認結果
-[分析グラフの埋め込み]
+
+![アルゴリズム出力結果のグラフ](./plots/[データセットID]/algorithm_output_plot.png)
+アルゴリズム出力結果
+
+![コア出力結果のグラフ](./plots/[データセットID]/core_output_plot.png)
+コア出力結果
+
+- 入出力の確認結果: [具体的な数値分析結果]
+- 考えられる原因: [分析結果に基づき、1つ以上の原因を整理]
+  - [原因1]
+  - [原因2]
+  - [原因3]
 
 ## 推奨事項
-[改善提案や次のアクション]
+[具体的な改善提案と次のステップ]
 
 ## 参照した仕様/コード（抜粋）
-[関連仕様書の参照内容]
+[アルゴリズム仕様書から自動抽出した設定情報]
 ```
+
+**新機能:**
+- ⭐ **動的プロット生成**: アルゴリズム仕様に基づいて適切な列のみをプロット
+- ⭐ **最適化された配置**: レポートと同じ階層にプロットを配置（`./plots/`）
+- ⭐ **直感的な結論**: 原因分析を整理したわかりやすいまとめ
+- ⭐ **柔軟な原因数**: 分析結果に応じて適切な数の原因を提示
 
 #### JSON結果（analysis_results.json）
 

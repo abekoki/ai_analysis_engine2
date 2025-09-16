@@ -1,0 +1,494 @@
+2025-09-16 14:29:59,700 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 14:30:03,856 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 14:30:03,856 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 14:30:03,856 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 14:30:03,891 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 14:30:03,891 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 14:30:03,908 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 14:30:03,908 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 14:30:04,007 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 14:30:04,007 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 14:30:22,229 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 14:30:22,229 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 14:30:22,229 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 14:30:22,229 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 14:30:22,229 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 14:30:22,246 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 14:30:22,246 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 14:30:22,246 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 14:30:49,999 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Found existing plots for test_dataset_001: []
+2025-09-16 14:30:49,999 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1997 characters
+2025-09-16 15:09:02,415 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:09:05,548 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:09:05,548 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:09:05,554 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:09:05,554 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:09:05,562 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:09:05,562 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:09:05,646 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:09:05,646 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:09:22,336 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:09:22,336 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:09:22,336 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:09:22,336 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:09:22,336 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:09:22,336 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:09:22,336 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:09:22,336 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:09:58,757 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Found existing plots for test_dataset_001: []
+2025-09-16 15:09:58,757 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 2230 characters
+2025-09-16 15:10:27,589 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:10:32,521 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:10:32,521 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:10:32,521 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:10:32,521 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:10:32,538 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:10:32,539 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:10:32,610 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:10:32,624 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:10:46,617 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 4 hypotheses for dataset test_dataset_001
+2025-09-16 15:10:46,617 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verifying hypothesis face_confidence_low for dataset test_dataset_001
+2025-09-16 15:10:55,063 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verification completed for hypothesis face_confidence_low: False
+2025-09-16 15:10:55,063 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:10:55,066 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:10:55,066 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:10:55,066 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:10:55,066 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Evaluation spec loaded: 5880 characters
+2025-09-16 15:11:33,465 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Found existing plots for test_dataset_001: []
+2025-09-16 15:11:33,465 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 2521 characters
+2025-09-16 15:14:14,224 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:14:16,123 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:14:16,123 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:14:16,123 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:14:16,123 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:14:16,137 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:14:16,138 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:14:16,223 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:14:16,223 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:14:29,395 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:14:29,395 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:14:29,395 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:14:29,395 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:14:29,395 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:14:29,400 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:14:29,400 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:14:29,400 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:14:59,442 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Found existing plots for test_dataset_001: []
+2025-09-16 15:14:59,442 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 2254 characters
+2025-09-16 15:23:11,453 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:23:13,397 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:23:13,397 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:23:13,397 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:23:13,397 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:23:13,414 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:23:13,415 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:23:13,486 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:23:13,486 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:23:39,412 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:23:39,412 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:23:39,412 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:23:39,418 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:23:39,418 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:23:39,418 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:23:39,418 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:23:39,418 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:24:17,777 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Found existing plots for test_dataset_001: []
+2025-09-16 15:24:17,777 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 2348 characters
+2025-09-16 15:25:22,971 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:25:25,411 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:25:25,411 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:25:25,426 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:25:25,426 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:25:25,438 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:25:25,439 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:25:25,512 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:25:25,512 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:25:43,520 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:25:43,520 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:25:43,520 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:25:43,536 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:25:43,536 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:25:43,536 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:25:43,536 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:25:43,536 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:26:10,237 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Found existing plots for test_dataset_001: []
+2025-09-16 15:26:10,237 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 2378 characters
+2025-09-16 15:29:41,638 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:29:43,687 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:29:43,689 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:29:43,691 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:29:43,691 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:29:43,700 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:29:43,701 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:29:43,777 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:29:43,778 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:29:58,527 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:29:58,527 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:29:58,527 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:29:58,527 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:29:58,527 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:29:58,527 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:29:58,527 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:29:58,527 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:30:29,734 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Found existing plots for test_dataset_001: []
+2025-09-16 15:30:29,746 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 2653 characters
+2025-09-16 15:36:54,321 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:36:56,711 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:36:56,711 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:36:56,727 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:36:56,727 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:36:56,738 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:36:56,739 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:36:56,821 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:36:56,821 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:37:22,889 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Error generating algorithm output plot: name 'threshold_name' is not defined
+2025-09-16 15:37:22,900 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Error generating core output plot: name 'threshold_name' is not defined
+2025-09-16 15:37:22,900 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:37:32,696 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1172 characters
+2025-09-16 15:37:53,862 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:37:55,828 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:37:55,832 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:37:55,837 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:37:55,837 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:37:55,844 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:37:55,845 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:37:55,934 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:37:55,934 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:38:15,625 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:38:15,625 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:38:15,625 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:38:15,625 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:38:15,625 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:38:15,633 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:38:15,633 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:38:15,633 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:38:15,635 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:38:15,636 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Error generating algorithm output plot: name 'threshold_name' is not defined
+2025-09-16 15:38:15,637 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Error generating core output plot: name 'threshold_name' is not defined
+2025-09-16 15:38:15,637 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:38:27,575 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1352 characters
+2025-09-16 15:38:41,246 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:38:43,724 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:38:43,726 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:38:43,731 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:38:43,731 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:38:43,739 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:38:43,739 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:38:43,826 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:38:43,826 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:39:11,452 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:39:11,452 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:39:11,452 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:39:11,452 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:39:11,452 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:39:11,455 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:39:11,455 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:39:11,455 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:39:11,455 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:39:11,458 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Error generating algorithm output plot: name 'threshold_name' is not defined
+2025-09-16 15:39:11,459 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Error generating core output plot: name 'threshold_name' is not defined
+2025-09-16 15:39:11,459 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:39:26,266 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1481 characters
+2025-09-16 15:39:45,596 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:39:47,784 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:39:47,800 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:39:47,807 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:39:47,808 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:39:47,813 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:39:47,813 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:39:47,894 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:39:47,894 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:40:03,089 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:40:03,089 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:40:03,089 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:40:03,089 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:40:03,089 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:40:03,089 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:40:03,089 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:40:03,096 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:40:03,097 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:40:07,154 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-16 15:40:07,284 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Failed to generate core output plot: Number of rows must be a positive integer, not 0
+2025-09-16 15:40:07,284 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:40:20,515 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1363 characters
+2025-09-16 15:40:48,676 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:40:50,888 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:40:50,888 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:40:50,895 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:40:50,895 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:40:50,902 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:40:50,902 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:40:50,985 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:40:50,985 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:41:16,063 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:41:16,063 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:41:16,063 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:41:16,063 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:41:16,063 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:41:16,063 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:41:16,063 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:41:16,074 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:41:16,074 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:41:20,260 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-16 15:41:21,170 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\plots\test_dataset_001\core_output_plot.png
+2025-09-16 15:41:21,170 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:41:32,190 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1395 characters
+2025-09-16 15:45:39,607 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:45:41,573 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:45:41,579 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:45:41,580 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:45:41,586 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:45:41,592 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:45:41,593 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:45:41,677 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:45:41,677 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:45:55,691 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:45:55,691 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:45:55,691 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:45:55,698 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:45:55,698 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:45:55,700 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:45:55,700 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:45:55,700 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:45:55,702 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:45:56,322 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-16 15:45:57,128 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\plots\test_dataset_001\core_output_plot.png
+2025-09-16 15:45:57,128 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:46:09,570 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1401 characters
+2025-09-16 15:46:48,780 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:46:51,951 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:46:51,951 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:46:51,961 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-16 15:46:51,961 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-16 15:46:51,973 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:46:51,973 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:46:52,051 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:46:52,051 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:47:08,537 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:47:08,537 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:47:08,537 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:47:08,537 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:47:08,537 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:47:08,544 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:47:08,544 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:47:08,544 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:47:08,547 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:47:09,201 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-16 15:47:10,018 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\plots\test_dataset_001\core_output_plot.png
+2025-09-16 15:47:10,018 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:47:20,885 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1386 characters
+2025-09-16 15:53:32,691 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:53:35,410 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:53:35,410 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:53:35,410 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:53:35,417 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/アルゴリズム出力結果/4.csv with 1347 rows
+2025-09-16 15:53:35,417 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/アルゴリズム出力結果/4.csv with shape (1347, 6)
+2025-09-16 15:53:35,430 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:53:35,431 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:53:35,500 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:53:35,500 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:53:51,601 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:53:51,601 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:53:51,601 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:53:51,601 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:53:51,617 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:53:51,619 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:53:51,619 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:53:51,619 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:53:51,622 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:53:51,743 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-16 15:53:52,472 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\plots\test_dataset_001\core_output_plot.png
+2025-09-16 15:53:52,472 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:54:05,219 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1439 characters
+2025-09-16 15:59:21,652 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-16 15:59:25,104 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:59:25,104 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:59:25,104 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-16 15:59:25,120 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/アルゴリズム出力結果/4.csv with 1347 rows
+2025-09-16 15:59:25,121 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/アルゴリズム出力結果/4.csv with shape (1347, 6)
+2025-09-16 15:59:25,126 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-16 15:59:25,128 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-16 15:59:25,190 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-16 15:59:25,190 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-16 15:59:48,424 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-16 15:59:48,425 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-16 15:59:48,425 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-16 15:59:48,426 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-16 15:59:48,426 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-16 15:59:48,428 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-16 15:59:48,429 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-16 15:59:48,429 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-16 15:59:48,431 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-16 15:59:48,555 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-16 15:59:49,311 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_001\core_output_plot.png
+2025-09-16 15:59:49,311 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-16 15:59:59,806 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1137 characters

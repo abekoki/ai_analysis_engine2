@@ -1,11 +1,14 @@
 """
 Configuration management for the AI Analysis Engine
+Generic configuration system supporting multiple algorithms
 """
 
 import os
-from typing import Optional, Dict, Any
+import re
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 from pathlib import Path
+import yaml
 
 
 class OpenAIConfig(BaseModel):
@@ -36,6 +39,57 @@ class LangGraphConfig(BaseModel):
     checkpoint_path: str = Field(default="./data/checkpoints")
 
 
+class AlgorithmConfig(BaseModel):
+    """Algorithm-specific configuration parsed from specification documents"""
+
+    # Basic algorithm information
+    name: str = Field(default="")
+    description: str = Field(default="")
+
+    # Input/Output specifications
+    input_columns: List[str] = Field(default_factory=list)
+    output_columns: List[str] = Field(default_factory=list)
+    required_columns: List[str] = Field(default_factory=list)
+
+    # Thresholds and parameters (dynamic from spec)
+    thresholds: Dict[str, float] = Field(default_factory=dict)
+    parameters: Dict[str, Any] = Field(default_factory=dict)
+
+    # Data validation rules
+    value_ranges: Dict[str, Dict[str, float]] = Field(default_factory=dict)
+    valid_values: Dict[str, List[Any]] = Field(default_factory=dict)
+
+    # Analysis patterns for detection
+    detection_patterns: Dict[str, Any] = Field(default_factory=dict)
+
+    # Evaluation criteria
+    evaluation_criteria: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AnalysisConfig(BaseModel):
+    """Analysis workflow configuration based on detailed analysis procedure"""
+
+    # Analysis phases (from 解析手順詳細.md)
+    phases: List[str] = Field(default_factory=lambda: [
+        "analysis_preparation",
+        "undetected_data_extraction",
+        "undetected_data_characteristics",
+        "algorithm_behavior_analysis",
+        "cause_identification",
+        "improvement_proposals",
+        "cause_report_creation"
+    ])
+
+    # Data processing settings
+    processing_rules: Dict[str, Any] = Field(default_factory=dict)
+
+    # Pattern recognition settings
+    pattern_analysis: Dict[str, Any] = Field(default_factory=dict)
+
+    # Reporting templates
+    report_templates: Dict[str, str] = Field(default_factory=dict)
+
+
 class Config:
     """Main configuration class"""
 
@@ -44,12 +98,15 @@ class Config:
         self.vectorstore = VectorStoreConfig()
         self.repl = REPLConfig()
         self.langgraph = LangGraphConfig()
+        self.algorithm = AlgorithmConfig()
+        self.analysis = AnalysisConfig()
 
         # Project paths
         self.project_root = Path(".")
         self.data_dir = Path("./data")
         self.output_dir = Path("./output")
         self.logs_dir = Path("./logs")
+        self.config_dir = Path("./config")
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -76,6 +133,251 @@ class Config:
     def validate_api_keys(self) -> bool:
         """Validate required API keys"""
         return bool(self.openai.api_key.strip())
+
+    def load_algorithm_config_from_spec(self, spec_content: str) -> AlgorithmConfig:
+        """
+        Parse algorithm specification and create configuration
+        Based on detailed analysis procedure (解析手順詳細.md)
+
+        Args:
+            spec_content: Algorithm specification document content
+
+        Returns:
+            AlgorithmConfig: Parsed algorithm configuration
+        """
+        config = AlgorithmConfig()
+
+        # Extract algorithm name and description
+        name_match = re.search(r'#+\s*([^\n]+)', spec_content)
+        if name_match:
+            config.name = name_match.group(1).strip()
+
+        # Extract thresholds using pattern recognition
+        threshold_patterns = [
+            r'閾値[:\s]*([0-9.]+)',  # Japanese threshold
+            r'threshold[:\s]*([0-9.]+)',  # English threshold
+            r'([A-Z_]+_THRESHOLD)\s*[:=]\s*([0-9.]+)',  # Constant style
+            r'([a-z_]+_threshold)\s*\|\s*[^|]*\|\s*\*\*([0-9.]+)\*\*',  # Table format with **bold**
+            r'([a-z_]+_threshold)\s*[:=]\s*\*\*([0-9.]+)\*\*',  # Parameter with bold
+        ]
+
+        for pattern in threshold_patterns:
+            matches = re.findall(pattern, spec_content, re.IGNORECASE)
+            for match in matches:
+                if isinstance(match, tuple) and len(match) == 2:
+                    key, value = match
+                    config.thresholds[key] = float(value)
+                else:
+                    # Generic threshold
+                    config.thresholds[f"threshold_{len(config.thresholds)}"] = float(match)
+
+        # Extract column names
+        column_patterns = [
+            r'列[:\s]*([a-zA-Z_][a-zA-Z0-9_]*)',  # Japanese column
+            r'column[:\s]*([a-zA-Z_][a-zA-Z0-9_]*)',  # English column
+            r'([a-zA-Z_][a-zA-Z0-9_]*)_openness',  # Eye openness pattern
+            r'([a-zA-Z_][a-zA-Z0-9_]*)_closed',  # Eye closed pattern
+            r'([a-zA-Z_][a-zA-Z0-9_]*)_confidence',  # Confidence pattern
+            r'\|\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\|\s*float',  # Table format column
+        ]
+
+        for pattern in column_patterns:
+            matches = re.findall(pattern, spec_content, re.IGNORECASE)
+            for match in matches:
+                col_name = match if isinstance(match, str) else match[0]
+                if col_name not in config.input_columns:
+                    config.input_columns.append(col_name)
+
+        # Extract output columns from output specification table
+        output_section = ""
+        output_match = re.search(r'### 2\.2 出力仕様.*?(?=###|$)', spec_content, re.DOTALL)
+        if output_match:
+            output_section = output_match.group(0)
+
+        # Extract output fields from table
+        output_table_pattern = r'\|\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\|\s*[a-zA-Z]+\s*\|\s*[^|]*\|'
+        output_matches = re.findall(output_table_pattern, output_section, re.IGNORECASE)
+        for match in output_matches:
+            if match not in config.output_columns:
+                config.output_columns.append(match)
+
+        # Set default required columns if not found
+        if not config.required_columns:
+            config.required_columns = ['frame_num', 'timestamp']  # Common defaults
+
+        # Extract value ranges
+        range_patterns = [
+            r'([0-9.]+)\s*[-~]\s*([0-9.]+)',  # Range pattern
+            r'範囲[:\s]*([0-9.]+)\s*[-~]\s*([0-9.]+)',  # Japanese range
+        ]
+
+        for pattern in range_patterns:
+            matches = re.findall(pattern, spec_content)
+            for i, match in enumerate(matches):
+                min_val, max_val = map(float, match)
+                config.value_ranges[f"range_{i}"] = {"min": min_val, "max": max_val}
+
+        # Set default eye openness range if not found
+        if 'leye_openness' in config.input_columns and 'leye_openness' not in [k for ranges in config.value_ranges.values() for k in ranges.keys()]:
+            config.value_ranges['leye_openness'] = {"min": 0.0, "max": 1.0}
+            config.value_ranges['reye_openness'] = {"min": 0.0, "max": 1.0}
+
+        # Extract valid values for categorical outputs
+        if 'is_drowsy' in spec_content.lower():
+            config.valid_values['is_drowsy'] = [-1, 0, 1]  # Error, Normal, Drowsy
+
+        # Set detection patterns based on algorithm type
+        if 'drowsy' in spec_content.lower() or '眠気' in spec_content:
+            config.detection_patterns = {
+                "eye_closure": {
+                    "continuous_time_threshold": config.thresholds.get('CONTINUOUS_CLOSE_TIME', 1.0),
+                    "eye_openness_threshold": config.thresholds.get('LEFT_EYE_THRESHOLD', 0.1)
+                }
+            }
+
+        # Set evaluation criteria
+        config.evaluation_criteria = {
+            "detection_accuracy": "Compare algorithm output with expected detection intervals",
+            "false_positive_rate": "Calculate false detection rate in non-target intervals",
+            "temporal_precision": "Evaluate detection timing accuracy"
+        }
+
+        return config
+
+    def load_algorithm_config_from_file(self, spec_file_path: str) -> AlgorithmConfig:
+        """
+        Load algorithm configuration from specification file
+
+        Args:
+            spec_file_path: Path to algorithm specification markdown file
+
+        Returns:
+            AlgorithmConfig: Loaded configuration
+        """
+        try:
+            with open(spec_file_path, 'r', encoding='utf-8') as f:
+                spec_content = f.read()
+
+            config = self.load_algorithm_config_from_spec(spec_content)
+            self.algorithm = config
+            return config
+
+        except Exception as e:
+            # Return default configuration if parsing fails
+            default_config = AlgorithmConfig()
+            default_config.name = "Unknown Algorithm"
+            default_config.description = f"Failed to parse specification: {e}"
+            return default_config
+
+    def save_algorithm_config(self, config: AlgorithmConfig, output_path: str) -> None:
+        """
+        Save algorithm configuration to YAML file
+
+        Args:
+            config: AlgorithmConfig to save
+            output_path: Output file path
+        """
+        config_dict = config.model_dump()
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            yaml.dump(config_dict, f, allow_unicode=True, default_flow_style=False)
+
+    def load_algorithm_config_from_yaml(self, yaml_path: str) -> AlgorithmConfig:
+        """
+        Load algorithm configuration from YAML file
+
+        Args:
+            yaml_path: Path to YAML configuration file
+
+        Returns:
+            AlgorithmConfig: Loaded configuration
+        """
+        try:
+            with open(yaml_path, 'r', encoding='utf-8') as f:
+                config_dict = yaml.safe_load(f)
+
+            config = AlgorithmConfig(**config_dict)
+            self.algorithm = config
+            return config
+
+        except Exception as e:
+            # Return default configuration if loading fails
+            default_config = AlgorithmConfig()
+            default_config.name = "Unknown Algorithm"
+            default_config.description = f"Failed to load YAML config: {e}"
+            return default_config
+
+    def get_dynamic_analysis_config(self) -> AnalysisConfig:
+        """
+        Get analysis configuration based on loaded algorithm config
+        Following the detailed analysis procedure (解析手順詳細.md)
+
+        Returns:
+            AnalysisConfig: Dynamic analysis configuration
+        """
+        analysis_config = AnalysisConfig()
+
+        # Set processing rules based on algorithm config
+        analysis_config.processing_rules = {
+            "filter_criteria": {
+                "evaluation_intervals": "Extract data within specified time ranges",
+                "detection_flags": f"Filter by {self.algorithm.output_columns} values",
+                "threshold_compliance": f"Check against {list(self.algorithm.thresholds.keys())}"
+            },
+            "feature_extraction": {
+                "time_series": "Extract temporal patterns and trends",
+                "statistical_measures": "Calculate mean, std, min, max for each feature",
+                "correlation_analysis": "Analyze relationships between input and output features"
+            }
+        }
+
+        # Set pattern analysis based on algorithm type
+        if self.algorithm.detection_patterns:
+            analysis_config.pattern_analysis = {
+                "detection_patterns": self.algorithm.detection_patterns,
+                "temporal_analysis": "Analyze detection timing and continuity",
+                "feature_correlation": "Correlate input features with detection results"
+            }
+
+        # Set report templates
+        analysis_config.report_templates = {
+            "cause_analysis": """
+## 原因分析レポート
+
+### アルゴリズム仕様
+- 名称: {algorithm_name}
+- 閾値設定: {thresholds}
+- 入力特徴量: {input_columns}
+
+### 未検知データ特性
+- データ範囲: {data_range}
+- 特徴量分布: {feature_distribution}
+
+### アルゴリズム挙動分析
+- 検知ロジック: {detection_logic}
+- 出力パターン: {output_patterns}
+
+### 改善提案
+{improvement_suggestions}
+            """,
+            "evaluation_summary": """
+## 評価結果サマリー
+
+### 全体評価
+- 正解率: {accuracy}
+- 誤検知率: {false_positive_rate}
+- 未検知率: {false_negative_rate}
+
+### 時系列分析
+{temporal_analysis}
+
+### 推奨改善策
+{recommendations}
+            """
+        }
+
+        self.analysis = analysis_config
+        return analysis_config
 
 
 # Global configuration instance

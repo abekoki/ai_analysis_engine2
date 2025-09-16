@@ -6,6 +6,10 @@ from typing import Dict, Any, List
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..config.config import AlgorithmConfig
 
 from ..config import config
 from ..models.state import DatasetInfo
@@ -31,9 +35,33 @@ class ReporterAgent:
         self.repl_tool = REPLTool()
 
         self.report_prompt = ChatPromptTemplate.from_template("""
-あなたはレポート作成エージェントです。アルゴリズム仕様に基づいて分析結果を正確に解釈し、包括的なレポートを生成してください。
+あなたは汎用レポート作成エージェントです。このシステムは様々なアルゴリズムに対して適用可能な汎用AI分析エンジンです。
 
-【重要】アルゴリズム仕様を理解し、その仕様に基づいて結果を解釈してください。
+**重要指示**:
+- 特定のアルゴリズム（眠気検知、顔認識など）に固有の用語は使用せず、汎用的な表現を使用してください
+- 信頼度条件、前提条件、品質条件などの汎用的な用語を使用してください
+- アルゴリズム仕様に基づきつつ、特定のアルゴリズムに依存しない表現を心がけてください
+
+
+
+【レポート構造】
+1. **概要**: 結論、解析対象動画、フレーム区間、期待値、検知結果
+2. **確認結果**: グラフ表示、分析結果、考えられる原因
+3. **推奨事項**: 具体的な改善提案
+4. **参照した仕様/コード（抜粋）**: 使用した仕様書の参照
+
+【結論作成のガイドライン】
+- 「考えられる原因」項目の内容を端的に整理する
+- ユーザーに直感的にわかりやすい表現を使用する
+- 技術的な詳細は避け、問題の本質を明確に伝える
+- 1-2文程度の簡潔なまとめとする
+
+【アルゴリズム仕様に基づくレポート項目】
+- **評価指標確認**: {thresholds}と実際のデータ分布の比較
+- **入力特徴量検証**: {input_columns}の妥当性と分布分析
+- **出力形式確認**: {output_columns}の仕様準拠状況
+- **値範囲検証**: {value_ranges}の遵守状況確認
+- **前提条件分析**: 検知結果が有効となるための信頼度・品質条件の充足状況
 
 データセット情報:
 {dataset_info}
@@ -50,68 +78,50 @@ class ReporterAgent:
 仮説と検証結果:
 {hypotheses_results}
 
-【レポート作成アプローチ】
-1. **アルゴリズム仕様の理解**: 入力パラメータ、判定ロジック、出力形式を把握
-2. **結果の仕様準拠解釈**: 分析結果をアルゴリズム仕様に基づいて解釈
-3. **問題点の特定**: 仕様と実際の結果の不整合点を明確に指摘
-4. **仕様ベースの推奨**: アルゴリズム仕様に準拠した改善提案
-
-以下の構造でMarkdown形式のレポートを作成してください：
+【レポート作成ガイドライン】
 
 # 個別データ分析レポート - {dataset_id}
 
 ## 概要
 
-- 結論: [アルゴリズム仕様に基づく分析結果の要約]
+- 結論: [考えられる原因を端的に整理したユーザーに直感的にわかりやすい内容]
 - 解析対象動画: {dataset_id}
-- フレーム区間: [期待値で指定された区間]
-- 期待値: [自然言語の期待値]
-- 検知結果: [アルゴリズム仕様に基づく実際の結果]
+- フレーム区間: [データセットから取得したフレーム区間]
+- 期待値: [データセットから取得した期待値]
+- 検知結果: [分析結果に基づく検知結果]
 
 ## 確認結果
 
-### データ構造確認
-- アルゴリズム出力: [列名、データ型、欠損値状況]
-- コアライブラリ出力: [列名、データ型、欠損値状況]
-- 仕様準拠状況: [アルゴリズム仕様との整合性]
+![アルゴリズム出力結果のグラフ](./plots/{dataset_id}/algorithm_output_plot.png)
+アルゴリズム出力結果
+<!-- アルゴリズム出力データの時系列グラフ（閾値付き）-->
 
-### アルゴリズム出力結果の時系列グラフ
-![アルゴリズム出力の時系列グラフ](../../plots/{dataset_id}/2_timeseries.png)
-アルゴリズム出力の時系列推移（判定結果列, continuous_timeなどの仕様準拠パラメータ）
+![コア出力結果のグラフ](./plots/{dataset_id}/core_output_plot.png)
+コア出力結果
+<!-- コア出力データの時系列グラフ（閾値付き）-->
 
-### コア出力結果の時系列グラフ
-![コア出力の時系列グラフ](../../plots/{dataset_id}/WIN_20250819_10_12_55_Pro_analysis_timeseries.png)
-コア出力の時系列推移（アルゴリズムへ入力している指標列などの仕様準拠パラメータ）
+<!-- 上記のグラフを生成後、閉眼傾向があるかを仮説検証にて確認し、結果を以下に記載 -->
+- 入出力の確認結果: [具体的な数値分析結果]
 
-### 仕様ベースの詳細分析
-- アルゴリズム判定ロジックの検証: [閾値、計算ロジックなどの仕様準拠確認]
-- エラーパターンの分析: [各種エラー状況]
-- 期待値との整合性: [フレーム区間、検知条件の確認]
+- 考えられる原因: [分析結果に基づき、1つ以上の原因を箇点で整理]
 
-- 考えられる原因: [アルゴリズム仕様に基づく根本原因分析]
 
 ## 推奨事項
 
-- [アルゴリズム仕様準拠の具体的な改善提案]
-- [パラメータ調整、データ品質改善などの提案]
+- [具体的な改善提案と次のステップ]
 
 ## 参照した仕様/コード（抜粋）
+... <!-- 仮説検証にて参照した仕様/コードをすべて記載-->
 
-### アルゴリズム仕様の関連部分
-[仕様書の判定ロジック、閾値、パラメータなどの抜粋]
+---
 
-### 検証で使用したコード
-[仮説検証で使用したPythonコードの抜粋]
-
-### 分析結果の仕様準拠評価
-[最終的な仕様準拠状況の評価]
 """)
 
     def generate_report(self, dataset: DatasetInfo,
                        analysis_results: Dict[str, Any],
                        hypotheses: List[Hypothesis]) -> str:
         """
-        Generate a comprehensive report for the dataset
+        Generate a comprehensive report for the dataset using algorithm configuration
 
         Args:
             dataset: Dataset information
@@ -124,7 +134,10 @@ class ReporterAgent:
         try:
             logger.info(f"Generating report for dataset {dataset.id}")
 
-            # Load algorithm spec
+            # Load algorithm configuration dynamically
+            algorithm_config = self._load_algorithm_config(dataset)
+
+            # Load specifications
             algorithm_spec = ""
             if dataset.algorithm_spec_md:
                 try:
@@ -134,7 +147,6 @@ class ReporterAgent:
                 except Exception as e:
                     logger.warning(f"Failed to load algorithm spec: {e}")
 
-            # Load evaluation spec
             evaluation_spec = ""
             if dataset.evaluation_spec_md:
                 try:
@@ -144,47 +156,310 @@ class ReporterAgent:
                 except Exception as e:
                     logger.warning(f"Failed to load evaluation spec: {e}")
 
+            # Prepare algorithm-specific context
+            algorithm_context = self._prepare_algorithm_context(algorithm_config)
+
             # Debug: Log specification content summaries
             logger.info(f"Algorithm spec preview: {algorithm_spec[:200] if algorithm_spec else 'None'}")
             logger.info(f"Evaluation spec preview: {evaluation_spec[:200] if evaluation_spec else 'None'}")
+
+            # Generate visualization plots
+            self._generate_visualization_plots(dataset, algorithm_config)
 
             # Prepare report data
             dataset_info = self._prepare_dataset_info(dataset)
             analysis_summary = self._summarize_analysis_results(analysis_results)
             hypotheses_summary = self._summarize_hypotheses(hypotheses)
 
-            # Get existing plots from dataset or generate new ones
-            plots = self._get_existing_plots(dataset)
-
-            # Use LLM to generate the report
+            # Use LLM to generate report with algorithm context
             chain = self.report_prompt | self.llm
 
             response = chain.invoke({
+                "dataset_id": dataset.id,
                 "dataset_info": dataset_info,
-                "algorithm_spec": algorithm_spec[:3000],  # Prioritize algorithm spec
+                "algorithm_spec": algorithm_spec[:3000],
                 "evaluation_spec": evaluation_spec[:2000],
                 "analysis_results": analysis_summary,
                 "hypotheses_results": hypotheses_summary,
-                "dataset_id": dataset.id
+                **algorithm_context
             })
 
-            # Replace {dataset_id} placeholder in the response
-            report_content = response.content.replace("{dataset_id}", dataset.id)
+            # Process the LLM response
+            report_content = response.content.strip()
 
-            report_content = response.content
-            logger.info(f"Generated report content length: {len(report_content)}")
-            logger.info(f"Report content preview: {report_content[:500]}")
+            # Add algorithm configuration info to report
+            if algorithm_config:
+                report_content += f"\n\n## アルゴリズム設定情報\n"
+                report_content += f"- アルゴリズム名: {algorithm_config.name}\n"
+                report_content += f"- 閾値設定: {algorithm_config.thresholds}\n"
+                report_content += f"- 必須列: {algorithm_config.required_columns}\n"
 
-            # Add plots to the report with correct relative paths
-            if plots:
-                report_content = self._insert_plots_into_report(report_content, plots, dataset.id)
-
-            logger.info(f"Report generated for dataset {dataset.id}")
+            logger.info(f"Generated report for dataset {dataset.id}: {len(report_content)} characters")
             return report_content
 
         except Exception as e:
             logger.error(f"Report generation failed: {e}")
-            return self._generate_fallback_report(dataset, str(e))
+            # Return basic error report
+            return f"""# エラーレポート - {dataset.id}
+
+## エラー発生
+レポート生成中にエラーが発生しました: {e}
+
+## 基本情報
+- データセットID: {dataset.id}
+- 期待値: {dataset.expected_result}
+"""
+
+    def _generate_visualization_plots(self, dataset: DatasetInfo, algorithm_config: 'AlgorithmConfig'):
+        """Generate visualization plots for algorithm and core output data"""
+        try:
+            logger.info(f"Generating visualization plots for dataset {dataset.id}")
+
+            # Create plots directory in the same location as reports
+            plots_dir = Path("output/results/reports/plots") / dataset.id
+            plots_dir.mkdir(parents=True, exist_ok=True)
+
+            # Load data using REPL tool
+            algorithm_data_path = dataset.algorithm_output_csv
+            core_data_path = dataset.core_output_csv
+
+            if algorithm_data_path and core_data_path:
+                # Generate algorithm output plot
+                self._generate_algorithm_output_plot(algorithm_data_path, algorithm_config, plots_dir / "algorithm_output_plot.png")
+
+                # Generate core output plot
+                self._generate_core_output_plot(core_data_path, algorithm_config, plots_dir / "core_output_plot.png")
+
+                logger.info(f"Generated plots for dataset {dataset.id}")
+            else:
+                logger.warning(f"Data paths not available for dataset {dataset.id}")
+
+        except Exception as e:
+            logger.error(f"Failed to generate plots for dataset {dataset.id}: {e}")
+
+    def _generate_algorithm_output_plot(self, data_path: str, algorithm_config: 'AlgorithmConfig', output_path: Path):
+        """Generate plot for algorithm output data with thresholds"""
+        try:
+            # Extract threshold information outside f-string
+            thresholds_code = ""
+            if hasattr(algorithm_config, 'thresholds') and algorithm_config.thresholds:
+                thresholds_list = []
+                for threshold_name, threshold_value in algorithm_config.thresholds.items():
+                    thresholds_list.append(f"('{threshold_name}', {threshold_value})")
+                thresholds_code = f"thresholds = [{', '.join(thresholds_list)}]"
+            else:
+                thresholds_code = "thresholds = []"
+
+            # Determine plot columns and thresholds dynamically
+            plot_columns_code = ""
+            if hasattr(algorithm_config, 'output_columns') and algorithm_config.output_columns:
+                # Use output columns from algorithm config
+                output_cols = [col for col in algorithm_config.output_columns if col]
+                if output_cols:
+                    plot_columns_code = f"plot_columns = {output_cols}"
+                else:
+                    plot_columns_code = "plot_columns = df.columns[:min(5, len(df.columns))]"  # Default to first 5 columns
+            else:
+                plot_columns_code = "plot_columns = df.columns[:min(5, len(df.columns))]"  # Default to first 5 columns
+
+            # Create plot generation code
+            plot_code = f"""
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Load data
+df = pd.read_csv(r'{data_path}')
+
+# Thresholds configuration
+{thresholds_code}
+
+# Determine columns to plot
+{plot_columns_code}
+
+# Filter to columns that exist in the data
+plot_columns = [col for col in plot_columns if col in df.columns]
+if not plot_columns:
+    plot_columns = df.columns[:min(5, len(df.columns))]
+
+# Create figure with subplots
+fig, axes = plt.subplots(len(plot_columns), 1, figsize=(12, 4*len(plot_columns)))
+if len(plot_columns) == 1:
+    axes = [axes]
+
+# Plot each column with thresholds
+for i, col in enumerate(plot_columns):
+    axes[i].plot(df.index, df[col], label=col, linewidth=2)
+
+    # Add threshold lines if available and column matches threshold
+    for threshold_name, threshold_value in thresholds:
+        # Apply threshold if column name matches threshold name (case-insensitive partial match)
+        if threshold_name.lower().replace('_threshold', '').replace('_', '') in col.lower():
+            label_text = f'{{threshold_name}}: {{threshold_value}}'
+            axes[i].axhline(y=threshold_value, color='red', linestyle='--', label=label_text)
+
+    axes[i].set_title(f'{{col}} - Algorithm Output')
+    axes[i].set_xlabel('Frame')
+    axes[i].set_ylabel('Value')
+    axes[i].legend()
+    axes[i].grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig(r'{output_path}', dpi=150, bbox_inches='tight')
+plt.close()
+"""
+
+            # Execute plot generation
+            result = self.repl_tool.execute_code(plot_code)
+            if result.get('success'):
+                logger.info(f"Generated algorithm output plot: {output_path}")
+            else:
+                logger.error(f"Failed to generate algorithm output plot: {result.get('error')}")
+
+        except Exception as e:
+            logger.error(f"Error generating algorithm output plot: {e}")
+
+    def _generate_core_output_plot(self, data_path: str, algorithm_config: 'AlgorithmConfig', output_path: Path):
+        """Generate plot for core output data with thresholds"""
+        try:
+            # Extract input columns and thresholds outside f-string
+            input_cols = algorithm_config.input_columns if hasattr(algorithm_config, 'input_columns') else []
+            input_cols_str = str(input_cols)
+
+            thresholds_code = ""
+            if hasattr(algorithm_config, 'thresholds') and algorithm_config.thresholds:
+                thresholds_list = []
+                for threshold_name, threshold_value in algorithm_config.thresholds.items():
+                    thresholds_list.append(f"('{threshold_name}', {threshold_value})")
+                thresholds_code = f"thresholds = [{', '.join(thresholds_list)}]"
+            else:
+                thresholds_code = "thresholds = []"
+
+            # Create plot generation code
+            plot_code = f"""
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Load data
+df = pd.read_csv(r'{data_path}')
+
+# Input columns and thresholds configuration
+input_cols = {input_cols_str}
+{thresholds_code}
+
+# Determine columns to plot from input columns
+plot_cols = []
+if input_cols:
+    plot_cols = [col for col in input_cols if col in df.columns]
+
+# If no input columns specified or none exist, determine columns dynamically based on data types and threshold names
+if not plot_cols:
+    # First, try to find columns that match threshold names
+    threshold_base_names = []
+    for threshold_name in thresholds:
+        base_name = threshold_name[0].lower().replace('_threshold', '').replace('_', '')
+        threshold_base_names.append(base_name)
+
+    # Look for columns that match threshold names
+    for col in df.columns:
+        col_lower = col.lower()
+        if any(base_name in col_lower for base_name in threshold_base_names):
+            plot_cols.append(col)
+
+    # If still no matches, look for numeric columns (likely to be features)
+    if not plot_cols:
+        for col in df.columns:
+            if df[col].dtype in ['int64', 'float64'] and col.lower() not in ['frame', 'index', 'timestamp']:
+                plot_cols.append(col)
+                if len(plot_cols) >= 6:  # Limit to 6 columns max
+                    break
+
+# If still no columns, use first few numeric columns
+if not plot_cols:
+    for col in df.columns:
+        if df[col].dtype in ['int64', 'float64']:
+            plot_cols.append(col)
+            if len(plot_cols) >= 6:  # Limit to 6 columns max
+                break
+
+# Ensure we have at least one column to plot
+if len(plot_cols) == 0:
+    print("No columns available for plotting")
+else:
+    fig, axes = plt.subplots(len(plot_cols), 1, figsize=(12, 4*len(plot_cols)))
+    if len(plot_cols) == 1:
+        axes = [axes]
+
+    # Plot each input column with thresholds
+    for i, col in enumerate(plot_cols):
+        axes[i].plot(df.index, df[col], label=col, linewidth=2)
+
+        # Add threshold lines if available and column matches threshold
+        for threshold_name, threshold_value in thresholds:
+            # Apply threshold if column name matches threshold name (case-insensitive partial match)
+            if threshold_name.lower().replace('_threshold', '').replace('_', '') in col.lower():
+                label_text = f'{{threshold_name}}: {{threshold_value}}'
+                axes[i].axhline(y=threshold_value, color='red', linestyle='--', label=label_text)
+
+        axes[i].set_title(f'{{col}} - Core Input Feature')
+        axes[i].set_xlabel('Frame')
+        axes[i].set_ylabel('Value')
+        axes[i].legend()
+        axes[i].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(r'{output_path}', dpi=150, bbox_inches='tight')
+    plt.close()
+"""
+
+            # Execute plot generation
+            result = self.repl_tool.execute_code(plot_code)
+            if result.get('success'):
+                logger.info(f"Generated core output plot: {output_path}")
+            else:
+                logger.error(f"Failed to generate core output plot: {result.get('error')}")
+
+        except Exception as e:
+            logger.error(f"Error generating core output plot: {e}")
+
+    def _load_algorithm_config(self, dataset: DatasetInfo):
+        """
+        Load algorithm configuration from dataset specification
+
+        Args:
+            dataset: Dataset information
+
+        Returns:
+            AlgorithmConfig: Loaded configuration
+        """
+        if dataset.algorithm_spec_md:
+            try:
+                return config.load_algorithm_config_from_file(dataset.algorithm_spec_md)
+            except Exception as e:
+                logger.warning(f"Failed to load algorithm config from file: {e}")
+
+        # Return default configuration
+        from ..config.config import AlgorithmConfig
+        return AlgorithmConfig()
+
+    def _prepare_algorithm_context(self, algorithm_config) -> Dict[str, Any]:
+        """
+        Prepare algorithm-specific context for LLM
+
+        Args:
+            algorithm_config: AlgorithmConfig object
+
+        Returns:
+            Dictionary with algorithm context
+        """
+        return {
+            "input_columns": algorithm_config.input_columns,
+            "output_columns": algorithm_config.output_columns,
+            "thresholds": algorithm_config.thresholds,
+            "value_ranges": algorithm_config.value_ranges,
+            "valid_values": algorithm_config.valid_values
+        }
 
     def _prepare_dataset_info(self, dataset: DatasetInfo) -> str:
         """Prepare dataset information for report generation"""

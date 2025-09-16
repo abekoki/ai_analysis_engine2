@@ -33,9 +33,20 @@ class VerifierAgent:
         self.max_iterations = config.langgraph.max_iterations
 
         self.prompt = ChatPromptTemplate.from_template("""
-あなたは検証エージェントです。アルゴリズム仕様に基づいて仮説をテストして検証してください。
+あなたは汎用検証エージェントです。解析手順詳細.mdの「4. アルゴリズムの挙動分析」に基づいて、アルゴリズム仕様を理解し、仮説をテストして検証します。
 
-【重要】アルゴリズム仕様を理解し、その仕様に基づいて仮説を検証してください。
+【解析手順詳細に基づく検証アプローチ】
+1. **検知ロジックの検証**: アルゴリズム仕様に基づき、検知条件を確認
+2. **時間窓の影響分析**: 時間窓サイズが評価指標のパターンに合っているか確認
+3. **特徴量の有効性評価**: 特徴量が評価指標のパターンを捉えるのに不十分でないか
+4. **モデル内部挙動分析**: 出力スコアや確率値を確認し、未検知の理由を分析
+
+【アルゴリズム仕様に基づく検証項目】
+- **検知条件確認**: {thresholds}と実際のデータ分布の比較
+- **入力特徴量検証**: {input_columns}の妥当性チェック
+- **出力形式確認**: {output_columns}の仕様準拠
+- **値範囲検証**: {value_ranges}の遵守状況
+- **前提条件検証**: 検知結果が有効となるための信頼度・品質条件の確認
 
 データセット情報:
 {dataset_info}
@@ -53,26 +64,23 @@ class VerifierAgent:
 信頼度: {confidence_score}
 仕様関連: {spec_reference}
 
-【アルゴリズム仕様に基づく検証アプローチ】
-1. **仕様理解**: アルゴリズムの判定ロジックとパラメータを把握
-2. **仮説の仕様準拠確認**: 仮説がアルゴリズム仕様と矛盾しないか確認
-3. **データ検証**: 実際のデータで仮説をテスト
-4. **仕様ベースの評価**: 結果をアルゴリズム仕様に基づいて評価
-
 【検証時の注目点】
-- アルゴリズムの判定閾値を列挙し、各閾値と出力結果について確認
-- アルゴリズムの計算ロジックを確認
-- エラーコードと仕様書のエラーハンドリング
-- 入力データの有効範囲と実際の値の比較
+- アルゴリズムの判定閾値（{thresholds}）と実際のデータ分布の整合性
+- 各種指標の閾値とエラーの関係
+- アルゴリズムの詳細な判定ロジック
+- 計算内容と閾値の妥当性
+- エラーコードと仕様書のエラーハンドリングの一致
+- 入力データの有効範囲（{value_ranges}）と実際の値の比較
+- 検知結果が有効となる前提条件（信頼度・品質条件）の充足状況
 
-Pythonコードを使って仕様に基づいた検証を行い、結果を評価してください。
+Pythonコードを使って仕様に基づいた動的検証を行い、結果を解析手順詳細の次のステップ（未検知の原因特定）につなげる情報を提供してください。
 
 検証結果を詳細に報告し、アルゴリズム仕様との関連を明確にしてください。
 """)
 
     def verify_hypothesis(self, dataset: DatasetInfo, hypothesis: Hypothesis) -> VerificationResult:
         """
-        Verify a hypothesis through testing
+        Verify a hypothesis through testing using dynamic algorithm configuration
 
         Args:
             dataset: Dataset information
@@ -84,7 +92,10 @@ Pythonコードを使って仕様に基づいた検証を行い、結果を評�
         try:
             logger.info(f"Verifying hypothesis {hypothesis.id} for dataset {dataset.id}")
 
-            # Load algorithm spec
+            # Load algorithm configuration dynamically
+            algorithm_config = self._load_algorithm_config(dataset)
+
+            # Load specifications
             algorithm_spec = ""
             if dataset.algorithm_spec_md:
                 try:
@@ -93,7 +104,6 @@ Pythonコードを使って仕様に基づいた検証を行い、結果を評�
                 except Exception as e:
                     logger.warning(f"Failed to load algorithm spec: {e}")
 
-            # Load evaluation spec
             evaluation_spec = ""
             if dataset.evaluation_spec_md:
                 try:
@@ -105,15 +115,26 @@ Pythonコードを使って仕様に基づいた検証を行い、結果を評�
             # Prepare verification context
             dataset_info = self._prepare_dataset_info(dataset)
 
-            # Generate verification code/tests
-            verification_code = self._generate_verification_code(hypothesis, dataset)
+            # Prepare algorithm-specific context
+            algorithm_context = self._prepare_algorithm_context(algorithm_config)
+
+            # Use LLM to generate verification plan with algorithm context
+            verification_plan = self._generate_verification_plan(
+                hypothesis, dataset, algorithm_spec, evaluation_spec,
+                dataset_info, algorithm_context
+            )
+
+            # Generate dynamic verification code/tests based on plan
+            verification_code = self._generate_dynamic_verification_code(
+                hypothesis, dataset, algorithm_config, verification_plan
+            )
 
             # Execute verification
             verification_result = self._execute_verification(verification_code, dataset)
 
-            # Evaluate results
+            # Evaluate results with algorithm context
             evaluation = self._evaluate_verification_results(
-                hypothesis, verification_result, dataset
+                hypothesis, verification_result, dataset, algorithm_config
             )
 
             result = VerificationResult(
@@ -148,153 +169,283 @@ Pythonコードを使って仕様に基づいた検証を行い、結果を評�
 
         return "\n".join(info_lines)
 
-    def _generate_verification_code(self, hypothesis: Hypothesis, dataset: DatasetInfo) -> str:
-        """Generate Python code to verify the hypothesis based on algorithm specifications"""
+    def _load_algorithm_config(self, dataset: DatasetInfo):
+        """
+        Load algorithm configuration from dataset specification
+
+        Args:
+            dataset: Dataset information
+
+        Returns:
+            AlgorithmConfig: Loaded configuration
+        """
+        if dataset.algorithm_spec_md:
+            try:
+                return config.load_algorithm_config_from_file(dataset.algorithm_spec_md)
+            except Exception as e:
+                logger.warning(f"Failed to load algorithm config from file: {e}")
+
+        # Return default configuration
+        from ..config.config import AlgorithmConfig
+        return AlgorithmConfig()
+
+    def _prepare_algorithm_context(self, algorithm_config) -> Dict[str, Any]:
+        """
+        Prepare algorithm-specific context for LLM
+
+        Args:
+            algorithm_config: AlgorithmConfig object
+
+        Returns:
+            Dictionary with algorithm context
+        """
+        return {
+            "input_columns": algorithm_config.input_columns,
+            "output_columns": algorithm_config.output_columns,
+            "thresholds": algorithm_config.thresholds,
+            "value_ranges": algorithm_config.value_ranges,
+            "valid_values": algorithm_config.valid_values,
+            "detection_patterns": algorithm_config.detection_patterns
+        }
+
+    def _generate_verification_plan(self, hypothesis: Hypothesis, dataset: DatasetInfo,
+                                   algorithm_spec: str, evaluation_spec: str,
+                                   dataset_info: str, algorithm_context: Dict[str, Any]) -> str:
+        """
+        Generate verification plan using LLM with algorithm context
+
+        Args:
+            hypothesis: Hypothesis to verify
+            dataset: Dataset information
+            algorithm_spec: Algorithm specification content
+            evaluation_spec: Evaluation specification content
+            dataset_info: Dataset information string
+            algorithm_context: Algorithm context dictionary
+
+        Returns:
+            String containing verification plan
+        """
+        plan_prompt = f"""
+以下の仮説を検証するための計画を作成してください。
+
+仮説: {hypothesis.description}
+仮説タイプ: {hypothesis.type.value}
+
+アルゴリズム仕様コンテキスト:
+- 入力特徴量: {algorithm_context.get('input_columns', [])}
+- 出力特徴量: {algorithm_context.get('output_columns', [])}
+- 閾値設定: {algorithm_context.get('thresholds', {})}
+- 値範囲: {algorithm_context.get('value_ranges', {})}
+- 有効値: {algorithm_context.get('valid_values', {})}
+
+データセット: {dataset_info}
+
+検証計画の構造:
+1. 検証対象の特定（どのデータ/特徴量を検証するか）
+2. 検証方法の決定（どのような分析/テストを行うか）
+3. 成功/失敗の判定基準
+4. 必要なPythonコードの概要
+
+簡潔に計画を記述してください。
+"""
+
+        try:
+            response = self.llm.invoke(plan_prompt)
+            return response.content.strip()
+        except Exception as e:
+            logger.warning(f"Failed to generate verification plan: {e}")
+            return f"Basic verification of hypothesis: {hypothesis.description}"
+
+    def _generate_dynamic_verification_code(self, hypothesis: Hypothesis, dataset: DatasetInfo,
+                                           algorithm_config, verification_plan: str) -> str:
+        """
+        Generate dynamic Python code to verify the hypothesis based on algorithm specifications
+
+        Args:
+            hypothesis: Hypothesis to verify
+            dataset: Dataset information
+            algorithm_config: AlgorithmConfig object
+            verification_plan: Verification plan from LLM
+
+        Returns:
+            String containing Python verification code
+        """
         # Load data
         code_lines = [
-            "# Load data for verification based on drowsy detection algorithm specs",
+            "# Dynamic verification code generated based on algorithm specifications",
             f"import pandas as pd",
             f"import numpy as np",
+            f"from typing import Dict, Any",
+            f"",
             f"algo_df = pd.read_csv('{dataset.algorithm_output_csv}')",
             f"core_df = pd.read_csv('{dataset.core_output_csv}')",
-            "",
-            "# Algorithm specifications from drowsy_detection spec",
-            "# left_eye_close_threshold: 0.10",
-            "# right_eye_close_threshold: 0.10",
-            "# face_conf_threshold: 0.75",
-            "# continuous_close_time: 1.00 seconds",
-            "LEFT_EYE_THRESHOLD = 0.10",
-            "RIGHT_EYE_THRESHOLD = 0.10",
-            "FACE_CONF_THRESHOLD = 0.75",
-            "CONTINUOUS_CLOSE_TIME = 1.0",
-            ""
+            f"",
+            "# Algorithm configuration loaded from specification",
         ]
 
-        # Add hypothesis-specific verification code
+        # Add dynamic thresholds from algorithm config
+        for key, value in algorithm_config.thresholds.items():
+            code_lines.append(f"{key} = {value}")
+
+        code_lines.append("")
+
+        # Add hypothesis-specific verification based on type
         if hypothesis.type.value == "data_quality_issue":
-            code_lines.extend([
-                "# Check data quality according to algorithm specifications",
-                "print('=== Data Quality Check ===')",
-                "print('Algorithm DF shape:', algo_df.shape)",
-                "print('Core DF shape:', core_df.shape)",
-                "print('Missing values in algorithm:', algo_df.isnull().sum().sum())",
-                "print('Missing values in core:', core_df.isnull().sum().sum())",
-                "",
-                "# Check if required columns exist (based on algorithm spec)",
-                "required_algo_cols = ['frame_num', 'is_drowsy']",
-                "required_core_cols = ['leye_openness', 'reye_openness']",
-                "",
-                "missing_algo_cols = [col for col in required_algo_cols if col not in algo_df.columns]",
-                "missing_core_cols = [col for col in required_core_cols if col not in core_df.columns]",
-                "",
-                "if missing_algo_cols:",
-                "    print('Missing algorithm columns:', missing_algo_cols)",
-                "if missing_core_cols:",
-                "    print('Missing core columns:', missing_core_cols)",
-                "",
-                "# Check data value ranges (based on algorithm spec)",
-                "print('\\n=== Value Range Check ===')",
-                "if 'is_drowsy' in algo_df.columns:",
-                "    valid_values = algo_df['is_drowsy'].isin([-1, 0, 1]).all()",
-                "    print('is_drowsy values valid (-1,0,1):', valid_values)",
-                "",
-                "# Check eye openness ranges (should be 0.0-1.0)",
-                "eye_cols = ['leye_openness', 'reye_openness']",
-                "for col in eye_cols:",
-                "    if col in core_df.columns:",
-                "        valid_range = (core_df[col] >= 0.0) & (core_df[col] <= 1.0)",
-                "        print(f'{col} in valid range [0,1]: {valid_range.all()}')",
-                "",
-                "# Result: Data quality assessment"
-            ])
-
-        elif hypothesis.type.value == "consistency_issue" or hypothesis.type.value == "specification_inconsistency":
-            code_lines.extend([
-                "# Check consistency with algorithm specifications",
-                "print('=== Algorithm Specification Consistency Check ===')",
-                "",
-                "# Check column alignment with spec",
-                "print('Algorithm columns:', list(algo_df.columns))",
-                "print('Core columns:', list(core_df.columns))",
-                "",
-                "# Verify algorithm output logic (based on spec)",
-                "if all(col in algo_df.columns for col in ['frame_num', 'is_drowsy']):",
-                "    print('\\n=== Algorithm Output Validation ===')",
-                "    # Check if error states (-1) correlate with missing face confidence",
-                "    error_frames = algo_df[algo_df['is_drowsy'] == -1]",
-                "    print(f'Frames with error state (-1): {len(error_frames)}')",
-                "    ",
-                "    # Check drowsy detection distribution",
-                "    drowsy_dist = algo_df['is_drowsy'].value_counts()",
-                "    print('\\nDrowsy detection distribution:')",
-                "    print(drowsy_dist)",
-                "",
-                "# Check eye state logic (based on spec)",
-                "if all(col in core_df.columns for col in ['leye_openness', 'reye_openness']):",
-                "    print('\\n=== Eye State Logic Validation ===')",
-                "    # Calculate expected eye closure states",
-                "    left_closed = core_df['leye_openness'] <= LEFT_EYE_THRESHOLD",
-                "    right_closed = core_df['reye_openness'] <= RIGHT_EYE_THRESHOLD",
-                "    both_closed = left_closed & right_closed",
-                "    ",
-                "    print(f'Left eye closed frames: {left_closed.sum()}')",
-                "    print(f'Right eye closed frames: {right_closed.sum()}')",
-                "    print(f'Both eyes closed frames: {both_closed.sum()}')",
-                "",
-                "# Result: Specification consistency assessment"
-            ])
-
+            code_lines.extend(self._generate_data_quality_verification(algorithm_config))
+        elif hypothesis.type.value == "specification_inconsistency":
+            code_lines.extend(self._generate_specification_verification(algorithm_config))
         elif hypothesis.type.value == "algorithm_bug":
-            code_lines.extend([
-                "# Check for algorithm bugs based on specifications",
-                "print('=== Algorithm Bug Detection ===')",
-                "",
-                "# Check continuous time calculation (based on spec)",
-                "if 'continuous_time' in algo_df.columns:",
-                "    print('\\n=== Continuous Time Analysis ===')",
-                "    continuous_stats = algo_df['continuous_time'].describe()",
-                "    print('Continuous time statistics:')",
-                "    print(continuous_stats)",
-                "    ",
-                "    # Check for unrealistic continuous times",
-                "    unrealistic_times = algo_df[algo_df['continuous_time'] > CONTINUOUS_CLOSE_TIME * 2]",
-                "    print(f'Frames with unrealistic continuous time: {len(unrealistic_times)}')",
-                "",
-                "# Check state transitions (based on spec)",
-                "if 'is_drowsy' in algo_df.columns:",
-                "    print('\\n=== State Transition Analysis ===')",
-                "    # Check for invalid state transitions",
-                "    state_changes = algo_df['is_drowsy'].diff().fillna(0)",
-                "    invalid_transitions = state_changes.abs() > 1  # Should only change by -1, 0, or 1",
-                "    print(f'Invalid state transitions: {invalid_transitions.sum()}')",
-                "",
-                "# Result: Algorithm bug assessment"
-            ])
-
+            code_lines.extend(self._generate_algorithm_bug_verification(algorithm_config))
+        elif hypothesis.type.value == "parameter_inappropriate":
+            code_lines.extend(self._generate_parameter_verification(algorithm_config))
         else:
-            # Generic verification with spec-aware checks
-            code_lines.extend([
-                "# Generic verification with algorithm specification awareness",
-                "print('=== General Verification with Spec Context ===')",
-                "print('Algorithm DF shape:', algo_df.shape)",
-                "print('Core DF shape:', core_df.shape)",
-                "",
-                "# Basic spec compliance check",
-                "spec_compliant = True",
-                "if 'is_drowsy' in algo_df.columns:",
-                "    valid_range = algo_df['is_drowsy'].isin([-1, 0, 1]).all()",
-                "    print(f'Algorithm output in valid range: {valid_range}')",
-                "    spec_compliant &= valid_range",
-                "",
-                "eye_cols_present = all(col in core_df.columns for col in ['leye_openness', 'reye_openness'])",
-                "print(f'Required eye columns present: {eye_cols_present}')",
-                "spec_compliant &= eye_cols_present",
-                "",
-                "print(f'Overall spec compliance: {spec_compliant}')",
-                "# Result: General specification-aware validation"
-            ])
+            code_lines.extend(self._generate_generic_verification(algorithm_config))
+
+        # Add result formatting
+        code_lines.extend([
+            "",
+            "# Format results for analysis",
+            "verification_results = {",
+            "    'hypothesis_type': '" + hypothesis.type.value + "',",
+            "    'verification_plan': '''" + verification_plan.replace("'", "\\'") + "''',",
+            "    'data_quality_checks': data_quality_checks,",
+            "    'algorithm_validation': algorithm_validation,",
+            "    'threshold_analysis': threshold_analysis,",
+            "    'pattern_analysis': pattern_analysis",
+            "}",
+            "",
+            "print('Verification completed')",
+            "print(f'Hypothesis: {hypothesis.description}')",
+            "print(f'Results: {verification_results}')"
+        ])
 
         return "\n".join(code_lines)
+
+    def _generate_data_quality_verification(self, algorithm_config) -> List[str]:
+        """Generate data quality verification code"""
+        code_lines = [
+            "# Data quality verification",
+            "data_quality_checks = {}",
+            "",
+            "# Check missing values",
+            "data_quality_checks['missing_values'] = {",
+            "    'algorithm_output': algo_df.isnull().sum().to_dict(),",
+            "    'core_output': core_df.isnull().sum().to_dict()",
+            "}",
+            "",
+            "# Check data ranges and quality conditions"
+        ]
+
+        # Add range checks for all configured columns
+        for col, ranges in algorithm_config.value_ranges.items():
+            min_val = ranges.get('min', float('-inf'))
+            max_val = ranges.get('max', float('inf'))
+            code_lines.extend([
+                f"# Check {col} range",
+                f"if '{col}' in algo_df.columns or '{col}' in core_df.columns:",
+                f"    df_to_check = algo_df if '{col}' in algo_df.columns else core_df",
+                f"    out_of_range = ((df_to_check['{col}'] < {min_val}) | (df_to_check['{col}'] > {max_val})).sum()",
+                f"    data_quality_checks['{col}_range'] = {{'out_of_range': int(out_of_range), 'total': len(df_to_check)}}"
+            ])
+
+        # Add quality condition checks (e.g., confidence thresholds)
+        for threshold_name, threshold_value in algorithm_config.thresholds.items():
+            if 'confidence' in threshold_name.lower() or 'quality' in threshold_name.lower():
+                col_name = threshold_name.lower().replace('_threshold', '').replace('_quality', '_confidence')
+                if col_name in algorithm_config.input_columns:
+                    code_lines.extend([
+                        f"# Check {threshold_name} condition",
+                        f"if '{col_name}' in algo_df.columns or '{col_name}' in core_df.columns:",
+                        f"    df_to_check = algo_df if '{col_name}' in algo_df.columns else core_df",
+                        f"    below_threshold = (df_to_check['{col_name}'] < {threshold_value}).sum()",
+                        f"    data_quality_checks['{threshold_name}_compliance'] = {{'below_threshold': int(below_threshold), 'threshold': {threshold_value}, 'total': len(df_to_check)}}"
+                    ])
+
+        return code_lines
+
+    def _generate_specification_verification(self, algorithm_config) -> List[str]:
+        """Generate specification compliance verification code"""
+        code_lines = [
+            "# Specification compliance verification",
+            "spec_compliance = {}",
+            "",
+            "# Check required columns"
+        ]
+
+        # Check required columns
+        for col in algorithm_config.required_columns:
+            code_lines.extend([
+                f"spec_compliance['{col}_exists'] = '{col}' in algo_df.columns or '{col}' in core_df.columns"
+            ])
+
+        # Check valid values
+        for col, valid_vals in algorithm_config.valid_values.items():
+            if col in ['is_drowsy']:  # Example output column
+                vals_str = str(valid_vals)
+                code_lines.extend([
+                    f"if '{col}' in algo_df.columns:",
+                    f"    invalid_count = (~algo_df['{col}'].isin({vals_str})).sum()",
+                    f"    spec_compliance['{col}_valid'] = {{'invalid_count': int(invalid_count), 'total': len(algo_df)}}"
+                ])
+
+        return code_lines
+
+    def _generate_algorithm_bug_verification(self, algorithm_config) -> List[str]:
+        """Generate algorithm bug detection verification code"""
+        code_lines = [
+            "# Algorithm bug detection verification",
+            "algorithm_validation = {}",
+            "",
+            "# Check threshold compliance"
+        ]
+
+        # Add threshold checks
+        for threshold_name, threshold_value in algorithm_config.thresholds.items():
+            if 'EYE' in threshold_name.upper():  # Eye-related thresholds
+                col_name = threshold_name.lower().replace('_threshold', '').replace('left_', 'l').replace('right_', 'r') + '_openness'
+                code_lines.extend([
+                    f"if '{col_name}' in core_df.columns:",
+                    f"    below_threshold = (core_df['{col_name}'] < {threshold_value}).sum()",
+                    f"    algorithm_validation['{threshold_name}_compliance'] = {{'below_threshold': int(below_threshold), 'threshold': {threshold_value}}}"
+                ])
+
+        return code_lines
+
+    def _generate_parameter_verification(self, algorithm_config) -> List[str]:
+        """Generate parameter appropriateness verification code"""
+        code_lines = [
+            "# Parameter appropriateness verification",
+            "parameter_analysis = {}",
+            "",
+            "# Analyze threshold effectiveness"
+        ]
+
+        # Add parameter analysis
+        for col in algorithm_config.input_columns:
+            if col in ['leye_openness', 'reye_openness']:
+                code_lines.extend([
+                    f"if '{col}' in core_df.columns:",
+                    f"    param_stats = core_df['{col}'].describe()",
+                    f"    parameter_analysis['{col}_distribution'] = param_stats.to_dict()"
+                ])
+
+        return code_lines
+
+    def _generate_generic_verification(self, algorithm_config) -> List[str]:
+        """Generate generic verification code"""
+        return [
+            "# Generic verification",
+            "generic_checks = {}",
+            "",
+            "# Basic statistical analysis",
+            "generic_checks['basic_stats'] = {",
+            "    'algorithm_shape': algo_df.shape,",
+            "    'core_shape': core_df.shape,",
+            "    'algorithm_columns': list(algo_df.columns),",
+            "    'core_columns': list(core_df.columns)",
+            "}"
+        ]
+
 
     def _execute_verification(self, code: str, dataset: DatasetInfo) -> Dict[str, Any]:
         """Execute verification code"""
@@ -320,8 +471,19 @@ Pythonコードを使って仕様に基づいた検証を行い、結果を評�
 
     def _evaluate_verification_results(self, hypothesis: Hypothesis,
                                      verification_result: Dict[str, Any],
-                                     dataset: DatasetInfo) -> Dict[str, Any]:
-        """Evaluate the results of verification"""
+                                     dataset: DatasetInfo, algorithm_config=None) -> Dict[str, Any]:
+        """
+        Evaluate the results of verification with algorithm context
+
+        Args:
+            hypothesis: Hypothesis that was verified
+            verification_result: Results from verification execution
+            dataset: Dataset information
+            algorithm_config: AlgorithmConfig for context-aware evaluation
+
+        Returns:
+            Dictionary with evaluation results
+        """
         try:
             if not verification_result.get("success"):
                 return {
@@ -329,38 +491,47 @@ Pythonコードを使って仕様に基づいた検証を行い、結果を評�
                     "details": f"Verification failed: {verification_result.get('error')}"
                 }
 
-            # Evaluate based on hypothesis type and results
+            # Evaluate based on hypothesis type and algorithm context
             stdout = verification_result.get("stdout", "")
-            result_data = verification_result.get("result")
+            result_data = verification_result.get("result", {})
 
-            # Simple evaluation logic (can be made more sophisticated)
-            if hypothesis.type.value == "data_quality_issue":
-                # Check for missing values or empty data
-                if "Missing values" in stdout and "0" not in stdout.split("Missing values:")[1].split()[0]:
-                    return {
-                        "success": True,
-                        "details": "Data quality issues confirmed by verification"
-                    }
+            # Algorithm-aware evaluation
+            evaluation_details = []
 
-            elif hypothesis.type.value == "consistency_issue":
-                # Check for consistency issues
-                if "Common columns" in stdout:
-                    return {
-                        "success": True,
-                        "details": "Consistency issues identified in verification"
-                    }
+            if algorithm_config:
+                # Check algorithm specification compliance
+                if hypothesis.type.value == "data_quality_issue":
+                    evaluation_details.extend(self._evaluate_data_quality_with_spec(
+                        stdout, result_data, algorithm_config
+                    ))
 
-            # Default evaluation
+                elif hypothesis.type.value == "specification_inconsistency":
+                    evaluation_details.extend(self._evaluate_specification_compliance(
+                        stdout, result_data, algorithm_config
+                    ))
+
+                elif hypothesis.type.value == "algorithm_bug":
+                    evaluation_details.extend(self._evaluate_algorithm_behavior(
+                        stdout, result_data, algorithm_config
+                    ))
+
+                elif hypothesis.type.value == "parameter_inappropriate":
+                    evaluation_details.extend(self._evaluate_parameter_effectiveness(
+                        stdout, result_data, algorithm_config
+                    ))
+
+            # General evaluation
             if stdout and len(stdout.strip()) > 0:
-                return {
-                    "success": True,
-                    "details": f"Verification completed successfully: {stdout[:200]}"
-                }
-            else:
-                return {
-                    "success": False,
-                    "details": "Verification produced no meaningful output"
-                }
+                evaluation_details.append(f"Verification output: {stdout[:200]}...")
+
+            success = len(evaluation_details) > 0
+            details = "; ".join(evaluation_details) if evaluation_details else "No specific findings"
+
+            return {
+                "success": success,
+                "details": details,
+                "evaluation_points": evaluation_details
+            }
 
         except Exception as e:
             logger.error(f"Result evaluation failed: {e}")
@@ -368,3 +539,69 @@ Pythonコードを使って仕様に基づいた検証を行い、結果を評�
                 "success": False,
                 "details": f"Evaluation failed: {e}"
             }
+
+    def _evaluate_data_quality_with_spec(self, stdout: str, result_data: Dict,
+                                       algorithm_config) -> List[str]:
+        """Evaluate data quality issues with algorithm specification context"""
+        findings = []
+
+        # Check for missing values
+        if "Missing values" in stdout:
+            if "algorithm" in stdout.lower() and "0" not in stdout:
+                findings.append("Algorithm output contains missing values")
+
+        # Check required columns
+        for col in algorithm_config.required_columns:
+            if f"missing_{col}" in stdout.lower():
+                findings.append(f"Required column '{col}' is missing")
+
+        # Check value ranges
+        for col, ranges in algorithm_config.value_ranges.items():
+            if f"{col}_range" in stdout.lower():
+                findings.append(f"Column '{col}' has values outside specified range")
+
+        return findings
+
+    def _evaluate_specification_compliance(self, stdout: str, result_data: Dict,
+                                         algorithm_config) -> List[str]:
+        """Evaluate specification compliance"""
+        findings = []
+
+        # Check column alignment
+        if "missing" in stdout.lower():
+            findings.append("Missing required columns detected")
+
+        # Check valid values
+        for col, valid_vals in algorithm_config.valid_values.items():
+            if f"{col}_valid" in stdout.lower():
+                findings.append(f"Column '{col}' contains invalid values")
+
+        return findings
+
+    def _evaluate_algorithm_behavior(self, stdout: str, result_data: Dict,
+                                   algorithm_config) -> List[str]:
+        """Evaluate algorithm behavior against specifications"""
+        findings = []
+
+        # Check threshold compliance
+        for threshold_name in algorithm_config.thresholds.keys():
+            if threshold_name.lower() in stdout.lower():
+                findings.append(f"Threshold '{threshold_name}' compliance analyzed")
+
+        # Check for unrealistic values
+        if "unrealistic" in stdout.lower():
+            findings.append("Unrealistic values detected in algorithm output")
+
+        return findings
+
+    def _evaluate_parameter_effectiveness(self, stdout: str, result_data: Dict,
+                                        algorithm_config) -> List[str]:
+        """Evaluate parameter effectiveness"""
+        findings = []
+
+        # Check parameter distributions
+        for col in algorithm_config.input_columns:
+            if f"{col}_distribution" in stdout.lower():
+                findings.append(f"Parameter '{col}' distribution analyzed")
+
+        return findings
