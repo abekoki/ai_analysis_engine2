@@ -1,0 +1,115 @@
+ハードコーディング箇所詳細リスト
+========================
+
+ファイル: src/ai_analysis_engine/agents/verifier_agent.py
+-----------------------------------------------------
+
+1. 行162-169: アルゴリズム閾値のハードコーディング
+   - LEFT_EYE_THRESHOLD = 0.10
+   - RIGHT_EYE_THRESHOLD = 0.10
+   - FACE_CONF_THRESHOLD = 0.75
+   - CONTINUOUS_CLOSE_TIME = 1.0
+
+2. 行184-185: 必須列名のハードコーディング
+   - required_algo_cols = ['frame_num', 'is_drowsy']
+   - required_core_cols = ['leye_openness', 'reye_openness']
+
+3. 行198-199: アルゴリズム出力値のハードコーディング
+   - algo_df['is_drowsy'].isin([-1, 0, 1]).all()
+
+4. 行202: 眼開度列名のハードコーディング
+   - eye_cols = ['leye_openness', 'reye_openness']
+
+5. 行205: 眼開度有効範囲のハードコーディング
+   - (core_df[col] >= 0.0) & (core_df[col] <= 1.0)
+
+6. 行221: 必須列チェックのハードコーディング
+   - ['frame_num', 'is_drowsy']
+
+7. 行224: エラー状態値のハードコーディング
+   - algo_df[algo_df['is_drowsy'] == -1]
+
+8. 行233: 眼状態列名のハードコーディング
+   - ['leye_openness', 'reye_openness']
+
+9. 行236-237: 閾値使用のハードコーディング
+   - core_df['leye_openness'] <= LEFT_EYE_THRESHOLD
+   - core_df['reye_openness'] <= RIGHT_EYE_THRESHOLD
+
+10. 行253: continuous_time列名のハードコーディング
+    - 'continuous_time' in algo_df.columns
+
+11. 行260: 非現実的時間のハードコーディング
+    - algo_df[algo_df['continuous_time'] > CONTINUOUS_CLOSE_TIME * 2]
+
+12. 行264: is_drowsy列名のハードコーディング
+    - 'is_drowsy' in algo_df.columns
+
+13. 行267-268: 状態遷移ルールのハードコーディング
+    - state_changes.abs() > 1
+    - Should only change by -1, 0, or 1
+
+14. 行284-286: アルゴリズム出力有効範囲のハードコーディング
+    - algo_df['is_drowsy'].isin([-1, 0, 1]).all()
+
+15. 行289: 眼列名のハードコーディング
+    - ['leye_openness', 'reye_openness']
+
+ファイル: src/ai_analysis_engine/core/nodes.py
+-------------------------------------------
+
+16. 行253: 閉眼関連列名のハードコーディング
+    - {'left_eye_closed', 'right_eye_closed'}
+    - 'is_drowsy' in df.columns
+
+17. 行255-261: 列名とラベルのハードコーディング
+    - 'is_drowsy'
+    - 'left_eye_closed'
+    - 'right_eye_closed'
+
+18. 行262: 眼開度列名のハードコーディング
+    - {'leye_openness', 'reye_openness'}
+
+19. 行264-265: 眼開度列名とラベルのハードコーディング
+    - 'leye_openness', 'Left Eye Openness'
+    - 'reye_openness', 'Right Eye Openness'
+
+20. 行404: 日本語キーワードのハードコーディング
+    - "連続閉眼" in expected
+
+21. 行519: 英語エラーメッセージのハードコーディング
+    - "Expected continuous closure not found in target interval"
+
+22. 行673: 日本語エラーメッセージのハードコーディング
+    - "被験者が閉眼していない可能性"
+
+ファイル: src/ai_analysis_engine/agents/consistency_checker_agent.py
+-----------------------------------------------------------------
+
+23. 行64: 出力値列名のハードコーディング
+    - is_drowsy, error_code
+
+ファイル: src/ai_analysis_engine/agents/reporter_agent.py
+-------------------------------------------------------
+
+24. 行80: continuous_time列名のハードコーディング
+    - continuous_timeなどの仕様準拠パラメータ
+
+25. 行259: ファイル名パターンのハードコーディング
+    - 'leye' in file_name.lower()
+    - 'reye' in file_name.lower()
+
+ファイル: src/ai_analysis_engine/agents/data_checker_agent.py
+----------------------------------------------------------
+
+26. 行66: 日本語パラメータ説明のハードコーディング
+    - 開眼度、信頼度
+
+===============================
+合計: 26箇所のハードコーディング箇所を特定
+
+分類:
+- 閾値関連: 8箇所
+- 列名関連: 12箇所
+- 値範囲関連: 3箇所
+- テキスト関連: 3箇所
