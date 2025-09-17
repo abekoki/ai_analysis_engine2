@@ -420,13 +420,12 @@ Pythonコードを使って仕様に基づいた動的検証を行い、結果�
             "# Analyze threshold effectiveness"
         ]
 
-        # Add parameter analysis
+        # Add parameter analysis for all input columns
         for col in algorithm_config.input_columns:
-            if col in ['leye_openness', 'reye_openness']:
-                code_lines.extend([
-                    f"if '{col}' in core_df.columns:",
-                    f"    param_stats = core_df['{col}'].describe()",
-                    f"    parameter_analysis['{col}_distribution'] = param_stats.to_dict()"
+            code_lines.extend([
+                f"if '{col}' in core_df.columns:",
+                f"    param_stats = core_df['{col}'].describe()",
+                f"    parameter_analysis['{col}_distribution'] = param_stats.to_dict()"
                 ])
 
         return code_lines

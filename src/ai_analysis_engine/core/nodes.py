@@ -247,23 +247,43 @@ class DataCheckerNode:
                 elif 'frame' in df.columns:
                     x_col = 'frame'
 
-                # Determine y series depending on file type
+                # Determine y series dynamically based on available columns
                 y_series = []
                 y_label = 'Value'
-                if {'left_eye_closed', 'right_eye_closed'}.issubset(set(df.columns)) or 'is_drowsy' in df.columns:
-                    # Algorithm output: plot drowsy/closed as 0/1
-                    if 'is_drowsy' in df.columns:
-                        y_series.append(('is_drowsy', 'is_drowsy'))
-                        y_label = 'is_drowsy'
-                    if 'left_eye_closed' in df.columns:
-                        y_series.append(('left_eye_closed', 'left_eye_closed'))
-                    if 'right_eye_closed' in df.columns:
-                        y_series.append(('right_eye_closed', 'right_eye_closed'))
-                elif {'leye_openness', 'reye_openness'}.issubset(set(df.columns)):
-                    # Core output: plot openness for both eyes
-                    y_series.append(('leye_openness', 'Left Eye Openness'))
-                    y_series.append(('reye_openness', 'Right Eye Openness'))
-                    y_label = 'Eye Openness'
+
+                # Dynamic column selection based on algorithm configuration
+                available_cols = set(df.columns)
+                numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+
+                # If we have algorithm config, use it to determine what to plot
+                if hasattr(state, 'algorithm_config') and state.algorithm_config:
+                    config = state.algorithm_config
+                    # For algorithm output files, plot output columns
+                    if any(col in available_cols for col in config.output_columns):
+                        for col in config.output_columns:
+                            if col in available_cols:
+                                if col in numeric_cols:
+                                    # Create readable label from column name
+                                    label = col.replace('_', ' ').title()
+                                    y_series.append((col, label))
+                                    y_label = 'Algorithm Output'
+                                elif df[col].dtype in ['object', 'category']:
+                                    # For categorical data, try to convert to numeric if possible
+                                    if df[col].str.isnumeric().all():
+                                        df_copy = df.copy()
+                                        df_copy[col] = pd.to_numeric(df_copy[col], errors='coerce')
+                                        if not df_copy[col].isna().all():
+                                            label = col.replace('_', ' ').title()
+                                            y_series.append((col, label))
+                                            y_label = 'Algorithm Output'
+                    # For core input files, plot input columns
+                    elif any(col in available_cols for col in config.input_columns):
+                        for col in config.input_columns:
+                            if col in available_cols and col in numeric_cols:
+                                # Create readable label from column name
+                                label = col.replace('_', ' ').title()
+                                y_series.append((col, label))
+                                y_label = 'Input Values'
                 else:
                     # Fallback: plot first numeric column
                     num_cols = df.select_dtypes(include=['number']).columns
@@ -348,8 +368,9 @@ class ConsistencyCheckerNode:
                 current_dataset.core_output_csv
             ])
 
-            # Perform consistency checks
-            consistency_results = self._check_consistency(dataframes, expected_result)
+            # Perform consistency checks with algorithm config
+            algorithm_config = getattr(state, 'algorithm_config', None)
+            consistency_results = self._check_consistency(dataframes, expected_result, algorithm_config)
 
             # Update dataset state
             current_dataset.consistency_check = consistency_results
@@ -365,7 +386,7 @@ class ConsistencyCheckerNode:
 
         return state
 
-    def _check_consistency(self, dataframes: Dict[str, Any], expected: str) -> Dict[str, Any]:
+    def _check_consistency(self, dataframes: Dict[str, Any], expected: str, algorithm_config=None) -> Dict[str, Any]:
         """Check consistency between data and expectations"""
         import re
         import numpy as np
@@ -382,7 +403,7 @@ class ConsistencyCheckerNode:
                 "longest_run": 0,
                 "runs": []
             },
-            "eye_openness_stats": {}
+            "input_column_stats": {}
         }
 
         # Basic file presence checks
@@ -401,48 +422,94 @@ class ConsistencyCheckerNode:
                 start_f, end_f = end_f, start_f
             results["target_interval"] = {"start": start_f, "end": end_f}
 
-        require_exists = ("連続閉眼" in expected)
+        # Dynamic detection of required patterns based on algorithm config
+        require_exists = False
+        if algorithm_config:
+            # Check if expected result mentions detection patterns
+            for pattern_name in algorithm_config.detection_patterns.keys():
+                if pattern_name.lower() in expected.lower():
+                    require_exists = True
+                    break
+        else:
+            # Fallback: check for common detection keywords
+            detection_keywords = ['連続', '検知', '検出', '存在', '発生']
+            require_exists = any(keyword in expected for keyword in detection_keywords)
+
         results["require_exists"] = require_exists
 
-        # Analyze eye openness from core output
+        # Analyze input data based on algorithm configuration
         core_df = None
-        for df in dataframes.values():
-            cols = set(df.columns)
-            if any(col for col in cols if 'openness' in col.lower()):
-                core_df = df.copy()
-                break
+        algo_df = None
+
+        if algorithm_config:
+            # Use algorithm config to distinguish input vs output data
+            for df in dataframes.values():
+                cols = set(df.columns)
+                # Check if this dataframe contains output columns (algorithm output)
+                if any(col in cols for col in algorithm_config.output_columns):
+                    algo_df = df.copy()
+                # Check if this dataframe contains input columns (core input)
+                elif any(col in cols for col in algorithm_config.input_columns):
+                    core_df = df.copy()
+        else:
+            # Fallback: heuristic-based detection
+            for df in dataframes.values():
+                cols = set(df.columns)
+                # Simple heuristic: if dataframe has detection/result columns, it's algorithm output
+                if any(col for col in cols if 'detection' in col.lower() or 'result' in col.lower()):
+                    algo_df = df.copy()
+                else:
+                    core_df = df.copy()
+                if core_df and algo_df:
+                    break
 
         if core_df is not None:
             frame_col = 'frame' if 'frame' in core_df.columns else None
-            openness_cols = [col for col in core_df.columns if 'openness' in col.lower()]
+            # Use algorithm config to determine which columns to analyze
+            if algorithm_config:
+                analysis_cols = [col for col in algorithm_config.input_columns
+                               if col in core_df.columns and core_df[col].dtype in ['int64', 'float64']]
+            else:
+                # Fallback: analyze numeric columns
+                analysis_cols = [col for col in core_df.columns
+                               if core_df[col].dtype in ['int64', 'float64'] and col != frame_col]
 
-            if openness_cols and frame_col and results["target_interval"]:
+            if analysis_cols and frame_col and results["target_interval"]:
                 s = results["target_interval"]["start"]
                 e = results["target_interval"]["end"]
                 sub = core_df[(core_df[frame_col] >= s) & (core_df[frame_col] <= e)]
 
                 if len(sub) > 0:
                     stats = {}
-                    for col in openness_cols:
+                    for col in analysis_cols:
                         mean_val = float(sub[col].mean())
                         stats[col] = {
                             "mean": round(mean_val, 3),
                             "min": float(sub[col].min()),
                             "max": float(sub[col].max())
                         }
-                    results["eye_openness_stats"] = stats
+                    results["input_column_stats"] = stats
 
-        # Try to detect continuous eye closure in algorithm output (generic approach)
-        algo_df = None
-        for df in dataframes.values():
-            cols = set(df.columns)
-            if 'frame_num' in cols or 'frame' in cols:
-                # Look for boolean/binary columns that might indicate closure/drowsiness
-                closure_cols = [col for col in cols if any(keyword in col.lower()
-                    for keyword in ['closed', 'drowsy', 'sleep', 'blink'])]
-                if closure_cols:
+        # Detect algorithm output data using configuration
+        if algo_df is None and algorithm_config:
+            # Use algorithm config to find output dataframe
+            for df in dataframes.values():
+                cols = set(df.columns)
+                if any(col in cols for col in algorithm_config.output_columns):
                     algo_df = df.copy()
                     break
+
+        # Fallback: heuristic detection if config didn't work
+        if algo_df is None:
+            for df in dataframes.values():
+                cols = set(df.columns)
+                if 'frame_num' in cols or 'frame' in cols:
+                    # Look for detection/result columns dynamically
+                    detection_cols = [col for col in cols if any(keyword in col.lower()
+                        for keyword in ['detection', 'result', 'closed', 'drowsy', 'sleep', 'blink'])]
+                    if detection_cols:
+                        algo_df = df.copy()
+                        break
 
         if algo_df is None:
             results["issues"].append("Algorithm dataframe not found for detection")
@@ -462,38 +529,50 @@ class ConsistencyCheckerNode:
             e = results["target_interval"]["end"]
             algo_df = algo_df[(algo_df[frame_col] >= s) & (algo_df[frame_col] <= e)]
 
-        # Build closed boolean series (generic approach)
-        closed_series = None
+        # Build detection series dynamically based on algorithm config
+        detection_series = None
 
-        # Try different strategies to identify closure indicators
-        closure_cols = [col for col in algo_df.columns if any(keyword in col.lower()
-            for keyword in ['closed', 'drowsy', 'sleep', 'blink'])]
+        if algorithm_config:
+            # Use output columns from algorithm config
+            detection_cols = [col for col in algorithm_config.output_columns
+                            if col in algo_df.columns and algo_df[col].dtype in ['int64', 'float64', 'bool']]
+        else:
+            # Fallback: heuristic detection
+            detection_cols = [col for col in algo_df.columns if any(keyword in col.lower()
+                for keyword in ['detection', 'result', 'closed', 'drowsy', 'sleep', 'blink'])]
 
-        if closure_cols:
-            # Combine all closure indicators
-            combined_closed = np.zeros(len(algo_df), dtype=bool)
-            for col in closure_cols:
+        if detection_cols:
+            # Combine all detection indicators
+            combined_detection = np.zeros(len(algo_df), dtype=bool)
+            for col in detection_cols:
                 if algo_df[col].dtype == bool:
-                    combined_closed |= algo_df[col].astype(bool)
+                    combined_detection |= algo_df[col].astype(bool)
                 elif algo_df[col].dtype in ['int64', 'float64']:
-                    combined_closed |= (algo_df[col] > 0)
-            closed_series = combined_closed
+                    # Use algorithm config thresholds if available
+                    threshold = 0.5  # default threshold
+                    if algorithm_config:
+                        for thresh_name, thresh_val in algorithm_config.thresholds.items():
+                            if col.lower() in thresh_name.lower():
+                                threshold = thresh_val
+                                break
+                    combined_detection |= (algo_df[col] > threshold)
+            detection_series = combined_detection
 
-        if closed_series is None or closed_series.size == 0:
-            results["issues"].append("No closure indicators found in algorithm output")
+        if detection_series is None or detection_series.size == 0:
+            results["issues"].append("No detection indicators found in algorithm output")
             results["overall_consistent"] = False
             return results
 
         # Detect runs of consecutive True (length >= 2)
         runs = []
         longest = 0
-        if closed_series.size > 0:
+        if detection_series.size > 0:
             start_idx = None
-            for idx, val in enumerate(closed_series):
+            for idx, val in enumerate(detection_series):
                 if val and start_idx is None:
                     start_idx = idx
-                if (not val or idx == len(closed_series) - 1) and start_idx is not None:
-                    end_idx = idx if val and idx == len(closed_series) - 1 else idx - 1
+                if (not val or idx == len(detection_series) - 1) and start_idx is not None:
+                    end_idx = idx if val and idx == len(detection_series) - 1 else idx - 1
                     run_len = end_idx - start_idx + 1
                     if run_len >= 2:
                         # Map back to frame numbers
@@ -658,25 +737,40 @@ class VerifierNode:
         require_exists = cc.get("require_exists", False)
         detection = (cc.get("detection") or {})
         exists = bool(detection.get("exists", False))
-        eye_stats = cc.get("eye_openness_stats", {})
+        input_stats = cc.get("input_column_stats", {})
 
         if require_exists and not exists:
             success = False
 
-            # Analyze eye openness statistics
-            if eye_stats:
-                for col, stats in eye_stats.items():
+            # Analyze input column statistics dynamically
+            if input_stats:
+                for col, stats in input_stats.items():
                     mean_val = stats.get("mean", 1.0)
                     evidence.append(f"{col}平均={mean_val}")
 
-                    if mean_val < 0.3:
-                        causes.append("被験者が閉眼していない可能性")
-                    elif mean_val > 0.7:
-                        causes.append("コアの検出機能に問題がある可能性")
+                    # Dynamic analysis based on column name patterns
+                    if 'openness' in col.lower() or 'confidence' in col.lower():
+                        if mean_val < 0.3:
+                            causes.append(f"{col}の値が低すぎる（検知対象が存在しない可能性）")
+                        elif mean_val > 0.8:
+                            causes.append(f"{col}の値が高すぎる（検知機能の感度が低い可能性）")
+                        else:
+                            causes.append(f"{col}の閾値設定ミスの可能性")
+                    elif 'probability' in col.lower() or 'score' in col.lower():
+                        if mean_val < 0.5:
+                            causes.append(f"{col}の確率値が低い（信頼性の低い入力データ）")
+                        else:
+                            causes.append(f"{col}の出力範囲確認の必要性")
                     else:
-                        causes.append("閾値設定ミスの可能性")
+                        # Generic analysis for other numeric columns
+                        min_val = stats.get("min", 0)
+                        max_val = stats.get("max", 1)
+                        if max_val - min_val < 0.1:
+                            causes.append(f"{col}の変動幅が小さい（安定した入力値）")
+                        else:
+                            causes.append(f"{col}の値分布を確認する必要性")
 
-            if not eye_stats:
+            if not input_stats:
                 causes.append("被験者のタスク不正の可能性")
                 causes.append("コアの検出機能に問題がある可能性")
 

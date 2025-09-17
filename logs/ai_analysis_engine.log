@@ -492,3 +492,36 @@
 2025-09-16 15:59:49,311 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_001\core_output_plot.png
 2025-09-16 15:59:49,311 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
 2025-09-16 15:59:59,806 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1137 characters
+2025-09-17 15:20:28,932 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-17 15:20:32,444 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-17 15:20:32,447 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-17 15:20:32,448 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-17 15:20:32,462 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/アルゴリズム出力結果/4.csv with 1347 rows
+2025-09-17 15:20:32,463 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/アルゴリズム出力結果/4.csv with shape (1347, 6)
+2025-09-17 15:20:32,476 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-17 15:20:32,477 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-17 15:20:32,550 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-17 15:20:32,550 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-17 15:20:55,205 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-17 15:20:55,206 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-17 15:20:55,206 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-17 15:20:55,207 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-17 15:20:55,208 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-17 15:20:55,209 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-17 15:20:55,210 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-17 15:20:55,210 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-17 15:20:55,224 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-17 15:20:55,398 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-17 15:20:56,109 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_001\core_output_plot.png
+2025-09-17 15:20:56,110 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-17 15:21:08,530 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1190 characters

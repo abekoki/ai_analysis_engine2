@@ -8,7 +8,10 @@ import re
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 from pathlib import Path
-import yaml
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 
 class OpenAIConfig(BaseModel):
@@ -217,23 +220,61 @@ class Config:
                 min_val, max_val = map(float, match)
                 config.value_ranges[f"range_{i}"] = {"min": min_val, "max": max_val}
 
-        # Set default eye openness range if not found
-        if 'leye_openness' in config.input_columns and 'leye_openness' not in [k for ranges in config.value_ranges.values() for k in ranges.keys()]:
-            config.value_ranges['leye_openness'] = {"min": 0.0, "max": 1.0}
-            config.value_ranges['reye_openness'] = {"min": 0.0, "max": 1.0}
+        # Set default value ranges for input columns if not found
+        for col in config.input_columns:
+            if col not in [k for ranges in config.value_ranges.values() for k in ranges.keys()]:
+                # Extract default ranges from specification if available
+                if 'openness' in col.lower():
+                    config.value_ranges[col] = {"min": 0.0, "max": 1.0}
+                elif 'confidence' in col.lower():
+                    config.value_ranges[col] = {"min": 0.0, "max": 1.0}
+                elif 'probability' in col.lower():
+                    config.value_ranges[col] = {"min": 0.0, "max": 1.0}
+                # For other columns, try to infer from column names or specification
 
-        # Extract valid values for categorical outputs
-        if 'is_drowsy' in spec_content.lower():
-            config.valid_values['is_drowsy'] = [-1, 0, 1]  # Error, Normal, Drowsy
+        # Extract valid values for categorical outputs from specification
+        for col in config.output_columns:
+            if col in spec_content:
+                # Look for valid values in specification (e.g., 0/1, -1/0/1, etc.)
+                if 'detection' in col.lower() or 'result' in col.lower():
+                    # Try to extract from specification patterns
+                    valid_value_patterns = [
+                        r'値[:\s]*([-1,0-9\s]+)',  # Japanese values
+                        r'values[:\s]*([-1,0-9\s]+)',  # English values
+                        r'[-1,0-9\s]+\([^)]*\)'  # Pattern like -1(Error), 0(Normal), 1(Drowsy)
+                    ]
+                    for pattern in valid_value_patterns:
+                        matches = re.findall(pattern, spec_content, re.IGNORECASE)
+                        if matches:
+                            # Parse valid values from matches
+                            for match in matches:
+                                values = [int(v.strip()) for v in match.split(',') if v.strip().lstrip('-').isdigit()]
+                                if values and col not in config.valid_values:
+                                    config.valid_values[col] = sorted(list(set(values)))
 
-        # Set detection patterns based on algorithm type
-        if 'drowsy' in spec_content.lower() or '眠気' in spec_content:
-            config.detection_patterns = {
-                "eye_closure": {
-                    "continuous_time_threshold": config.thresholds.get('CONTINUOUS_CLOSE_TIME', 1.0),
-                    "eye_openness_threshold": config.thresholds.get('LEFT_EYE_THRESHOLD', 0.1)
+        # Extract detection patterns from specification dynamically
+        config.detection_patterns = {}
+        # Look for detection patterns in the specification
+        detection_pattern_matches = re.findall(
+            r'(?:検知|detection)[:\s]*([^。。\n]+)',
+            spec_content,
+            re.IGNORECASE
+        )
+
+        # Extract threshold-based patterns
+        for threshold_name, threshold_value in config.thresholds.items():
+            if 'time' in threshold_name.lower() or 'duration' in threshold_name.lower():
+                pattern_name = threshold_name.lower().replace('_', ' ')
+                config.detection_patterns[pattern_name] = {
+                    "threshold": threshold_value,
+                    "type": "time_based"
                 }
-            }
+            elif 'threshold' in threshold_name.lower():
+                pattern_name = threshold_name.lower().replace('_threshold', '').replace('_', ' ')
+                config.detection_patterns[pattern_name] = {
+                    "threshold": threshold_value,
+                    "type": "value_based"
+                }
 
         # Set evaluation criteria
         config.evaluation_criteria = {
