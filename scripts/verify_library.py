@@ -28,9 +28,17 @@ def test_imports():
             ConfigurationError,
             ValidationError,
             AnalysisError,
-            TimeoutError
+            TimeoutError,
+            InitializationError
         )
-        print("✅ インポート成功")
+
+        # メソッドシグネチャの確認
+        import inspect
+        init_sig = inspect.signature(AIAnalysisEngine.__init__)
+        analyze_sig = inspect.signature(AIAnalysisEngine.analyze)
+        print(f"✅ インポート成功")
+        print(f"   __init__ signature: {init_sig}")
+        print(f"   analyze signature: {analyze_sig}")
         return True
     except ImportError as e:
         print(f"❌ インポート失敗: {e}")
@@ -285,7 +293,24 @@ def main():
         print("\n📚 次に行うこと:")
         print("1. pip install -e . でライブラリをインストール")
         print("2. OpenAI APIキーを設定")
-        print("3. docs/library_usage.md を参照して使用開始")
+        print("3. docs/library_usage_new.md を参照して使用開始")
+        print("\n🔧 新しいAPI仕様:")
+        print("   # 初期化（RAGベクトル化）")
+        print("   engine.initialize(")
+        print("       algorithm_specs=['docs/spec.md'],")
+        print("       algorithm_codes=['src/algo.py'],")
+        print("       evaluation_specs=['docs/eval.md'],")
+        print("       evaluation_codes=['src/eval.py']")
+        print("   )")
+        print("   ")
+        print("   # 複数データセットの一括分析")
+        print("   results = engine.analyze(")
+        print("       algorithm_outputs=['data/algo1.csv', 'data/algo2.csv'],")
+        print("       core_outputs=['data/core1.csv', 'data/core2.csv'],")
+        print("       expected_results=['期待1', '期待2'],")
+        print("       output_dir='./results',")
+        print("       dataset_ids=['dataset_1', 'dataset_2']")
+        print("   )")
         return 0
     else:
         print("⚠️  一部のテストが失敗しました。詳細を確認してください。")

@@ -154,9 +154,26 @@ class TestAIAnalysisEngine:
         config = AnalysisConfig(api_key="test-key")
         engine = AIAnalysisEngine(config)
 
-        result = engine.initialize()
-        assert result is True
-        assert engine.is_initialized() is True
+        # モックファイル作成
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix='.md', delete=False) as f:
+            spec_file = f.name
+        with tempfile.NamedTemporaryFile(suffix='.py', delete=False) as f:
+            code_file = f.name
+
+        try:
+            result = engine.initialize(
+                algorithm_specs=[spec_file],
+                algorithm_codes=[code_file],
+                evaluation_specs=[spec_file],
+                evaluation_codes=[code_file]
+            )
+            assert result is True
+            assert engine.is_initialized() is True
+        finally:
+            import os
+            os.unlink(spec_file)
+            os.unlink(code_file)
 
     @patch('ai_analysis_engine.main.AIAnalysisEngine.initialize')
     def test_engine_initialization_failure(self, mock_init):
@@ -166,8 +183,25 @@ class TestAIAnalysisEngine:
         config = AnalysisConfig(api_key="test-key")
         engine = AIAnalysisEngine(config)
 
-        with pytest.raises(InitializationError):
-            engine.initialize()
+        # モックファイル作成
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix='.md', delete=False) as f:
+            spec_file = f.name
+        with tempfile.NamedTemporaryFile(suffix='.py', delete=False) as f:
+            code_file = f.name
+
+        try:
+            with pytest.raises(InitializationError):
+                engine.initialize(
+                    algorithm_specs=[spec_file],
+                    algorithm_codes=[code_file],
+                    evaluation_specs=[spec_file],
+                    evaluation_codes=[code_file]
+                )
+        finally:
+            import os
+            os.unlink(spec_file)
+            os.unlink(code_file)
 
     def test_not_initialized_error(self):
         """初期化前の使用エラーテスト"""
@@ -175,69 +209,89 @@ class TestAIAnalysisEngine:
 
         with pytest.raises(InitializationError):
             engine.analyze(
-                algorithm_output="/fake/path.csv",
-                core_output="/fake/path.csv",
-                algorithm_spec="/fake/path.md",
-                expected_result="test"
+                algorithm_outputs=["/fake/path.csv"],
+                core_outputs=["/fake/path.csv"],
+                expected_results=["test"],
+                output_dir="/tmp",
+                dataset_ids=["test"]
             )
 
     def test_input_validation(self):
         """入力検証のテスト"""
         config = AnalysisConfig(api_key="test-key")
         engine = AIAnalysisEngine(config)
-        engine._initialized = True  # モック初期化
+        # モックで初期化済み状態にする
+        engine._rag_initialized = True
+        engine._algorithm_specs = ["dummy"]
+        engine._algorithm_codes = ["dummy"]
+        engine._evaluation_specs = ["dummy"]
+        engine._evaluation_codes = ["dummy"]
+        engine._internal_engine = Mock()
 
         # 存在しないファイル
         with pytest.raises(ValidationError):
             engine.analyze(
-                algorithm_output="/nonexistent.csv",
-                core_output="/nonexistent.csv",
-                algorithm_spec="/nonexistent.md",
-                expected_result="test"
+                algorithm_outputs=["/nonexistent.csv"],
+                core_outputs=["/nonexistent.csv"],
+                expected_results=["test"],
+                output_dir="/tmp",
+                dataset_ids=["test"]
             )
 
-        # 無効な拡張子
-        with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
-            temp_file = f.name
+        # リスト長の不一致
+        with pytest.raises(ValidationError):
+            engine.analyze(
+                algorithm_outputs=["file1.csv", "file2.csv"],  # 長さ2
+                core_outputs=["core.csv"],                      # 長さ1（不一致）
+                expected_results=["test"],
+                output_dir="/tmp",
+                dataset_ids=["test"]
+            )
 
-        try:
-            with pytest.raises(ValidationError):
-                engine.analyze(
-                    algorithm_output=temp_file,  # .txtファイル
-                    core_output=temp_file,
-                    algorithm_spec=temp_file,
-                    expected_result="test"
-                )
-        finally:
-            os.unlink(temp_file)
+        # 空の出力ディレクトリ
+        with pytest.raises(ValidationError):
+            engine.analyze(
+                algorithm_outputs=["dummy.csv"],
+                core_outputs=["dummy.csv"],
+                expected_results=["test"],
+                output_dir="",  # 空
+                dataset_ids=["test"]
+            )
 
         # 空の期待結果
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as f:
-            temp_csv = f.name
-        with tempfile.NamedTemporaryFile(suffix='.md', delete=False) as f:
-            temp_md = f.name
-
-        try:
-            with pytest.raises(ValidationError):
-                engine.analyze(
-                    algorithm_output=temp_csv,
-                    core_output=temp_csv,
-                    algorithm_spec=temp_md,
-                    expected_result=""  # 空の期待結果
-                )
-        finally:
-            os.unlink(temp_csv)
-            os.unlink(temp_md)
+        with pytest.raises(ValidationError):
+            engine.analyze(
+                algorithm_outputs=["dummy.csv"],
+                core_outputs=["dummy.csv"],
+                expected_results=[""],  # 空
+                output_dir="/tmp",
+                dataset_ids=["test"]
+            )
 
     def test_status_method(self):
         """ステータス取得のテスト"""
         config = AnalysisConfig(api_key="test-key")
         engine = AIAnalysisEngine(config)
 
+        # 初期状態
         status = engine.get_status()
         assert status["initialized"] is False
+        assert status["rag_initialized"] is False
         assert "version" in status
-        assert "config" in status
+        assert "documents_loaded" in status
+
+        # RAG初期化状態のモック
+        engine._rag_initialized = True
+        engine._algorithm_specs = ["spec1.md", "spec2.md"]
+        engine._algorithm_codes = ["code1.py"]
+        engine._evaluation_specs = ["eval.md"]
+        engine._evaluation_codes = ["eval.py"]
+        engine._internal_engine = Mock()
+
+        status = engine.get_status()
+        assert status["initialized"] is True
+        assert status["rag_initialized"] is True
+        assert status["documents_loaded"]["algorithm_specs"] == 2
 
     @patch('ai_analysis_engine.main.AIAnalysisEngine')
     def test_shutdown_method(self, mock_engine_class):
@@ -248,11 +302,19 @@ class TestAIAnalysisEngine:
         config = AnalysisConfig(api_key="test-key")
         engine = AIAnalysisEngine(config)
         engine._internal_engine = mock_engine
-        engine._initialized = True
+        engine._rag_initialized = True
+        engine._algorithm_specs = ["spec.md"]
+        engine._algorithm_codes = ["code.py"]
+        engine._evaluation_specs = ["eval.md"]
+        engine._evaluation_codes = ["eval.py"]
 
         engine.shutdown()
 
-        assert engine._initialized is False
+        assert engine._rag_initialized is False
+        assert len(engine._algorithm_specs) == 0
+        assert len(engine._algorithm_codes) == 0
+        assert len(engine._evaluation_specs) == 0
+        assert len(engine._evaluation_codes) == 0
         assert engine._internal_engine is None
 
     @pytest.mark.asyncio
@@ -260,15 +322,22 @@ class TestAIAnalysisEngine:
         """非同期分析のテスト"""
         config = AnalysisConfig(api_key="test-key")
         engine = AIAnalysisEngine(config)
-        engine._initialized = True  # モック初期化
+        # モックで初期化済み状態にする
+        engine._rag_initialized = True
+        engine._algorithm_specs = ["dummy"]
+        engine._algorithm_codes = ["dummy"]
+        engine._evaluation_specs = ["dummy"]
+        engine._evaluation_codes = ["dummy"]
+        engine._internal_engine = Mock()
 
         # 実際の分析はモック化されているので、ValidationErrorが発生
         with pytest.raises(ValidationError):
             await engine.analyze_async(
-                algorithm_output="/nonexistent.csv",
-                core_output="/nonexistent.csv",
-                algorithm_spec="/nonexistent.md",
-                expected_result="test"
+                algorithm_outputs=["/nonexistent.csv"],
+                core_outputs=["/nonexistent.csv"],
+                expected_results=["test"],
+                output_dir="/tmp",
+                dataset_ids=["test"]
             )
 
 
@@ -313,3 +382,44 @@ class TestIntegration:
         assert engine.config.model == "gpt-4"
         assert engine.config.temperature == 0.3
         assert engine.config.timeout == 600
+
+    def test_full_initialization_flow(self):
+        """完全な初期化フローテスト"""
+        # このテストは実際の環境ではAPIキーが必要なので、モックを使用
+        with patch('ai_analysis_engine.main.AIAnalysisEngine.initialize') as mock_init:
+            mock_init.return_value = True
+
+            config = AnalysisConfig(api_key="test-key")
+            engine = AIAnalysisEngine(config)
+
+            # モックファイル作成
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix='.md', delete=False) as f:
+                spec_file = f.name
+            with tempfile.NamedTemporaryFile(suffix='.py', delete=False) as f:
+                code_file = f.name
+
+            try:
+                # RAG初期化
+                result = engine.initialize(
+                    algorithm_specs=[spec_file],
+                    algorithm_codes=[code_file],
+                    evaluation_specs=[spec_file],
+                    evaluation_codes=[code_file]
+                )
+                assert result is True
+                assert engine.is_initialized() is True
+
+                # ステータス確認
+                status = engine.get_status()
+                assert status["initialized"] is True
+                assert status["rag_initialized"] is True
+
+                # シャットダウン
+                engine.shutdown()
+                assert engine.is_initialized() is False
+
+            finally:
+                import os
+                os.unlink(spec_file)
+                os.unlink(code_file)

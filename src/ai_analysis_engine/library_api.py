@@ -36,7 +36,11 @@ class AIAnalysisEngine:
         """
         self.config = config or AnalysisConfig.from_env()
         self._internal_engine = None
-        self._initialized = False
+        self._rag_initialized = False
+        self._algorithm_specs = []
+        self._algorithm_codes = []
+        self._evaluation_specs = []
+        self._evaluation_codes = []
 
         # 設定検証
         try:
@@ -44,24 +48,52 @@ class AIAnalysisEngine:
         except ValueError as e:
             raise ConfigurationError(f"Invalid configuration: {e}")
 
-    def initialize(self) -> bool:
+    def initialize(
+        self,
+        algorithm_specs: List[str],
+        algorithm_codes: List[str],
+        evaluation_specs: List[str],
+        evaluation_codes: List[str]
+    ) -> bool:
         """
-        エンジンの初期化
+        エンジンの初期化とRAGベクトル化
+
+        Args:
+            algorithm_specs: アルゴリズム仕様Markdownファイルパスのリスト
+            algorithm_codes: アルゴリズム実装コードファイルパスのリスト
+            evaluation_specs: 評価仕様Markdownファイルパスのリスト
+            evaluation_codes: 評価環境コードファイルパスのリスト
 
         Returns:
             bool: 初期化成功の場合True
 
         Raises:
             InitializationError: 初期化失敗時
+            ValidationError: 入力検証エラー
         """
+        # 入力検証
+        self._validate_initialization_inputs(
+            algorithm_specs, algorithm_codes, evaluation_specs, evaluation_codes
+        )
+
         try:
+            # 内部エンジンの初期化
             if self._internal_engine is None:
                 self._internal_engine = _InternalEngine()
 
             if not self._internal_engine.initialize():
                 raise InitializationError("Failed to initialize internal engine")
 
-            self._initialized = True
+            # RAGドキュメントの保存
+            self._algorithm_specs = algorithm_specs
+            self._algorithm_codes = algorithm_codes
+            self._evaluation_specs = evaluation_specs
+            self._evaluation_codes = evaluation_codes
+
+            # RAGベクトル化の実行
+            self._initialize_rag_vector_stores()
+            self._rag_initialized = True
+
             return True
 
         except Exception as e:
@@ -74,36 +106,35 @@ class AIAnalysisEngine:
         Returns:
             bool: 初期化済みの場合True
         """
-        return self._initialized and self._internal_engine is not None
+        return (self._internal_engine is not None and
+                self._rag_initialized and
+                bool(self._algorithm_specs) and
+                bool(self._algorithm_codes) and
+                bool(self._evaluation_specs) and
+                bool(self._evaluation_codes))
 
     def analyze(
         self,
-        algorithm_output: str,
-        core_output: str,
-        algorithm_spec: str,
-        expected_result: str,
-        algorithm_codes: Optional[List[str]] = None,
-        evaluation_specs: Optional[List[str]] = None,
-        evaluation_codes: Optional[List[str]] = None,
-        dataset_id: Optional[str] = None,
+        algorithm_outputs: List[str],
+        core_outputs: List[str],
+        expected_results: List[str],
+        output_dir: str,
+        dataset_ids: List[str],
         timeout: Optional[int] = None
-    ) -> AnalysisResult:
+    ) -> List[AnalysisResult]:
         """
-        単一データセットの分析を実行
+        複数データセットの一括分析を実行
 
         Args:
-            algorithm_output: アルゴリズム出力CSVファイルパス
-            core_output: コアライブラリ出力CSVファイルパス
-            algorithm_spec: アルゴリズム仕様Markdownファイルパス
-            expected_result: 期待される結果の自然言語記述
-            algorithm_codes: アルゴリズム実装コードファイルパスのリスト
-            evaluation_specs: 評価仕様Markdownファイルパスのリスト
-            evaluation_codes: 評価環境コードファイルパスのリスト
-            dataset_id: データセットID（Noneの場合は自動生成）
+            algorithm_outputs: アルゴリズム出力CSVファイルパスのリスト
+            core_outputs: コアライブラリ出力CSVファイルパスのリスト
+            expected_results: 期待される結果の自然言語記述のリスト
+            output_dir: 結果出力ディレクトリ
+            dataset_ids: データセットIDのリスト
             timeout: タイムアウト時間（秒、Noneの場合は設定値を使用）
 
         Returns:
-            AnalysisResult: 分析結果
+            List[AnalysisResult]: 分析結果のリスト
 
         Raises:
             ValidationError: 入力検証エラー
@@ -114,160 +145,242 @@ class AIAnalysisEngine:
             raise InitializationError("Engine not initialized. Call initialize() first.")
 
         # 入力検証
-        self._validate_inputs(
-            algorithm_output, core_output, algorithm_spec, expected_result
+        self._validate_analysis_inputs(
+            algorithm_outputs, core_outputs, expected_results, output_dir, dataset_ids
         )
-
-        # データセットIDの設定
-        if dataset_id is None:
-            dataset_id = f"dataset_{int(time.time())}"
 
         # タイムアウト設定
         actual_timeout = timeout or self.config.timeout
+        results = []
 
         try:
-            # 内部エンジン用のリクエスト作成
-            state = self._internal_engine.create_analysis_request(
-                algorithm_outputs=[algorithm_output],
-                core_outputs=[core_output],
-                algorithm_specs=[algorithm_spec],
-                evaluation_specs=evaluation_specs or [algorithm_spec],  # デフォルトでアルゴリズム仕様を使用
-                expected_results=[expected_result],
-                algorithm_codes=algorithm_codes,
-                evaluation_codes=evaluation_codes,
-                dataset_ids=[dataset_id],
-                output_dir=self.config.output_dir
-            )
+            # 各データセットの処理
+            for i, (algo_csv, core_csv, expected, dataset_id) in enumerate(zip(
+                algorithm_outputs, core_outputs, expected_results, dataset_ids
+            )):
+                try:
+                    print(f"📊 データセット {i+1}/{len(dataset_ids)} を処理中: {dataset_id}")
 
-            # 分析実行（タイムアウト付き）
-            start_time = time.time()
-            result = self._run_with_timeout(
-                self._internal_engine.run_analysis(state),
-                actual_timeout
-            )
-            execution_time = time.time() - start_time
+                    # 内部エンジン用のリクエスト作成
+                    state = self._internal_engine.create_analysis_request(
+                        algorithm_outputs=[algo_csv],
+                        core_outputs=[core_csv],
+                        algorithm_specs=self._algorithm_specs,
+                        evaluation_specs=self._evaluation_specs,
+                        expected_results=[expected],
+                        algorithm_codes=self._algorithm_codes,
+                        evaluation_codes=self._evaluation_codes,
+                        dataset_ids=[dataset_id],
+                        output_dir=output_dir
+                    )
 
-            # 結果の変換
-            return self._convert_to_library_result(
-                result, dataset_id, execution_time
-            )
+                    # 分析実行（タイムアウト付き）
+                    start_time = time.time()
+                    result = self._run_with_timeout(
+                        self._internal_engine.run_analysis(state),
+                        actual_timeout
+                    )
+                    execution_time = time.time() - start_time
+
+                    # 結果の変換
+                    analysis_result = self._convert_to_library_result(
+                        result, dataset_id, execution_time
+                    )
+                    results.append(analysis_result)
+
+                    print(f"✅ データセット {dataset_id} の分析完了")
+
+                except Exception as e:
+                    print(f"❌ データセット {dataset_id} の分析失敗: {e}")
+                    # エラーが発生しても処理を継続
+                    error_result = AnalysisResult.error_result(
+                        dataset_id=dataset_id,
+                        error=str(e),
+                        error_details={"batch_index": i, "traceback": str(e)}
+                    )
+                    results.append(error_result)
+
+            print(f"📊 一括分析完了: {len(results)}/{len(dataset_ids)} 件処理")
+            return results
 
         except asyncio.TimeoutError:
-            raise TimeoutError(f"Analysis timed out after {actual_timeout} seconds")
+            raise TimeoutError(f"Batch analysis timed out after {actual_timeout} seconds")
         except Exception as e:
             raise AnalysisError(f"Analysis failed: {e}")
 
-    async def analyze_async(
-        self,
-        algorithm_output: str,
-        core_output: str,
-        algorithm_spec: str,
-        expected_result: str,
-        algorithm_codes: Optional[List[str]] = None,
-        evaluation_specs: Optional[List[str]] = None,
-        evaluation_codes: Optional[List[str]] = None,
-        dataset_id: Optional[str] = None,
-        timeout: Optional[int] = None
-    ) -> AnalysisResult:
+    def _initialize_rag_vector_stores(self) -> None:
         """
-        単一データセットの分析を非同期実行
+        RAGベクトルストアの初期化
+
+        初期化時に提供された仕様書とコードファイルをベクトル化
+        """
+        try:
+            from .tools.rag_tool import RAGTool
+
+            print("🔍 RAGベクトル化を開始...")
+
+            # RAGツールの初期化
+            rag_tool = RAGTool()
+
+            # ドキュメントの準備
+            documents = {
+                "algorithm_specs": self._algorithm_specs,
+                "algorithm_codes": self._algorithm_codes,
+                "evaluation_specs": self._evaluation_specs,
+                "evaluation_codes": self._evaluation_codes
+            }
+
+            # ベクトルストアの初期化
+            if rag_tool.initialize_vector_stores(documents):
+                print("✅ RAGベクトル化完了")
+            else:
+                print("⚠️ RAGベクトル化で警告が発生しましたが、処理を継続します")
+
+        except Exception as e:
+            print(f"⚠️ RAGベクトル化でエラーが発生しましたが、処理を継続します: {e}")
+
+    def _validate_initialization_inputs(
+        self,
+        algorithm_specs: List[str],
+        algorithm_codes: List[str],
+        evaluation_specs: List[str],
+        evaluation_codes: List[str]
+    ) -> None:
+        """
+        初期化入力の検証
 
         Args:
-            algorithm_output: アルゴリズム出力CSVファイルパス
-            core_output: コアライブラリ出力CSVファイルパス
-            algorithm_spec: アルゴリズム仕様Markdownファイルパス
-            expected_result: 期待される結果の自然言語記述
-            algorithm_codes: アルゴリズム実装コードファイルパスのリスト
-            evaluation_specs: 評価仕様Markdownファイルパスのリスト
-            evaluation_codes: 評価環境コードファイルパスのリスト
-            dataset_id: データセットID（Noneの場合は自動生成）
+            algorithm_specs: アルゴリズム仕様ファイルパスのリスト
+            algorithm_codes: アルゴリズムコードファイルパスのリスト
+            evaluation_specs: 評価仕様ファイルパスのリスト
+            evaluation_codes: 評価コードファイルパスのリスト
+
+        Raises:
+            ValidationError: 検証エラー
+        """
+        # 必須パラメータのチェック
+        if not algorithm_specs:
+            raise ValidationError("algorithm_specs cannot be empty")
+        if not algorithm_codes:
+            raise ValidationError("algorithm_codes cannot be empty")
+        if not evaluation_specs:
+            raise ValidationError("evaluation_specs cannot be empty")
+        if not evaluation_codes:
+            raise ValidationError("evaluation_codes cannot be empty")
+
+        # ファイル存在チェック
+        all_files = algorithm_specs + algorithm_codes + evaluation_specs + evaluation_codes
+        for file_path in all_files:
+            if not Path(file_path).exists():
+                raise ValidationError(f"File does not exist: {file_path}")
+
+        # ファイル拡張子チェック
+        for spec_file in algorithm_specs + evaluation_specs:
+            if not spec_file.lower().endswith(('.md', '.txt', '.markdown')):
+                raise ValidationError(f"Specification file must be .md, .txt, or .markdown: {spec_file}")
+
+        print(f"✅ 初期化入力検証完了: {len(all_files)} ファイル確認済み")
+
+    def _validate_analysis_inputs(
+        self,
+        algorithm_outputs: List[str],
+        core_outputs: List[str],
+        expected_results: List[str],
+        output_dir: str,
+        dataset_ids: List[str]
+    ) -> None:
+        """
+        分析入力の検証
+
+        Args:
+            algorithm_outputs: アルゴリズム出力ファイルパスのリスト
+            core_outputs: コア出力ファイルパスのリスト
+            expected_results: 期待結果のリスト
+            output_dir: 出力ディレクトリ
+            dataset_ids: データセットIDのリスト
+
+        Raises:
+            ValidationError: 検証エラー
+        """
+        # リスト長の一致チェック
+        lengths = [
+            len(algorithm_outputs),
+            len(core_outputs),
+            len(expected_results),
+            len(dataset_ids)
+        ]
+
+        if len(set(lengths)) != 1:
+            raise ValidationError(
+                f"All input lists must have the same length. "
+                f"Got lengths: algorithm_outputs={len(algorithm_outputs)}, "
+                f"core_outputs={len(core_outputs)}, "
+                f"expected_results={len(expected_results)}, "
+                f"dataset_ids={len(dataset_ids)}"
+            )
+
+        # ファイル存在チェック
+        for file_path in algorithm_outputs + core_outputs:
+            if not Path(file_path).exists():
+                raise ValidationError(f"File does not exist: {file_path}")
+
+        # ファイル拡張子チェック
+        for csv_file in algorithm_outputs + core_outputs:
+            if not csv_file.lower().endswith('.csv'):
+                raise ValidationError(f"Output file must be .csv: {csv_file}")
+
+        # 出力ディレクトリチェック
+        if not output_dir.strip():
+            raise ValidationError("output_dir cannot be empty")
+
+        # データセットIDチェック
+        for dataset_id in dataset_ids:
+            if not dataset_id.strip():
+                raise ValidationError("dataset_ids cannot contain empty strings")
+
+        # 期待結果チェック
+        for expected in expected_results:
+            if not expected.strip():
+                raise ValidationError("expected_results cannot contain empty strings")
+
+        print(f"✅ 分析入力検証完了: {len(algorithm_outputs)} 件のデータセットを確認")
+
+    async def analyze_async(
+        self,
+        algorithm_outputs: List[str],
+        core_outputs: List[str],
+        expected_results: List[str],
+        output_dir: str,
+        dataset_ids: List[str],
+        timeout: Optional[int] = None
+    ) -> List[AnalysisResult]:
+        """
+        複数データセットの一括分析を非同期実行
+
+        Args:
+            algorithm_outputs: アルゴリズム出力CSVファイルパスのリスト
+            core_outputs: コアライブラリ出力CSVファイルパスのリスト
+            expected_results: 期待される結果の自然言語記述のリスト
+            output_dir: 結果出力ディレクトリ
+            dataset_ids: データセットIDのリスト
             timeout: タイムアウト時間（秒、Noneの場合は設定値を使用）
 
         Returns:
-            AnalysisResult: 分析結果
+            List[AnalysisResult]: 分析結果のリスト
         """
         # 現在の実装は同期処理なので、非同期ラッパーを提供
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
             self.analyze,
-            algorithm_output,
-            core_output,
-            algorithm_spec,
-            expected_result,
-            algorithm_codes,
-            evaluation_specs,
-            evaluation_codes,
-            dataset_id,
+            algorithm_outputs,
+            core_outputs,
+            expected_results,
+            output_dir,
+            dataset_ids,
             timeout
         )
 
-    def analyze_batch(
-        self,
-        datasets: List[Dict[str, Any]],
-        timeout: Optional[int] = None
-    ) -> List[AnalysisResult]:
-        """
-        複数データセットの一括分析を実行
-
-        Args:
-            datasets: データセット情報のリスト
-                各要素は以下の形式:
-                {
-                    "algorithm_output": "path/to/algo.csv",
-                    "core_output": "path/to/core.csv",
-                    "algorithm_spec": "path/to/spec.md",
-                    "expected_result": "期待される動作",
-                    "algorithm_codes": ["path/to/code.py"],  # オプション
-                    "evaluation_specs": ["path/to/eval.md"], # オプション
-                    "evaluation_codes": ["path/to/eval.py"], # オプション
-                    "dataset_id": "custom_id"                # オプション
-                }
-            timeout: 全体のタイムアウト時間（秒）
-
-        Returns:
-            List[AnalysisResult]: 分析結果のリスト
-
-        Raises:
-            ValidationError: 入力検証エラー
-            AnalysisError: 分析実行エラー
-        """
-        if not self.is_initialized():
-            raise InitializationError("Engine not initialized. Call initialize() first.")
-
-        results = []
-        start_time = time.time()
-        actual_timeout = timeout or self.config.timeout
-
-        for i, dataset in enumerate(datasets):
-            if time.time() - start_time > actual_timeout:
-                raise TimeoutError(f"Batch analysis timed out after {actual_timeout} seconds")
-
-            try:
-                result = self.analyze(
-                    algorithm_output=dataset["algorithm_output"],
-                    core_output=dataset["core_output"],
-                    algorithm_spec=dataset["algorithm_spec"],
-                    expected_result=dataset["expected_result"],
-                    algorithm_codes=dataset.get("algorithm_codes"),
-                    evaluation_specs=dataset.get("evaluation_specs"),
-                    evaluation_codes=dataset.get("evaluation_codes"),
-                    dataset_id=dataset.get("dataset_id"),
-                    timeout=max(30, actual_timeout - int(time.time() - start_time))  # 残り時間
-                )
-                results.append(result)
-
-            except Exception as e:
-                # エラーが発生しても処理を継続
-                dataset_id = dataset.get("dataset_id", f"dataset_{i}")
-                error_result = AnalysisResult.error_result(
-                    dataset_id=dataset_id,
-                    error=str(e),
-                    error_details={"batch_index": i}
-                )
-                results.append(error_result)
-
-        return results
 
     def get_status(self) -> Dict[str, Any]:
         """
@@ -279,15 +392,23 @@ class AIAnalysisEngine:
         if not self._internal_engine:
             return {
                 "initialized": False,
+                "rag_initialized": False,
                 "config_valid": self.config.validate() if self.config else False,
                 "version": "1.0.0"
             }
 
         internal_status = self._internal_engine.get_status()
         return {
-            "initialized": self._initialized,
+            "initialized": self.is_initialized(),
+            "rag_initialized": self._rag_initialized,
             "config_valid": self.config.validate() if self.config else False,
             "internal_engine_ready": internal_status.get("initialized", False),
+            "documents_loaded": {
+                "algorithm_specs": len(self._algorithm_specs),
+                "algorithm_codes": len(self._algorithm_codes),
+                "evaluation_specs": len(self._evaluation_specs),
+                "evaluation_codes": len(self._evaluation_codes)
+            },
             "version": "1.0.0",
             "config": {
                 "model": self.config.model,
@@ -306,37 +427,15 @@ class AIAnalysisEngine:
             # 内部エンジンのクリーンアップ（必要に応じて）
             pass
 
-        self._initialized = False
+        # RAG関連の状態クリア
+        self._rag_initialized = False
+        self._algorithm_specs = []
+        self._algorithm_codes = []
+        self._evaluation_specs = []
+        self._evaluation_codes = []
+
         self._internal_engine = None
 
-    def _validate_inputs(
-        self,
-        algorithm_output: str,
-        core_output: str,
-        algorithm_spec: str,
-        expected_result: str
-    ) -> None:
-        """入力パラメータの検証"""
-        # ファイル存在チェック
-        for file_path, name in [
-            (algorithm_output, "algorithm_output"),
-            (core_output, "core_output"),
-            (algorithm_spec, "algorithm_spec")
-        ]:
-            if not Path(file_path).exists():
-                raise ValidationError(f"{name} file does not exist: {file_path}")
-
-        # ファイル拡張子チェック
-        if not algorithm_output.lower().endswith('.csv'):
-            raise ValidationError("algorithm_output must be a CSV file")
-        if not core_output.lower().endswith('.csv'):
-            raise ValidationError("core_output must be a CSV file")
-        if not algorithm_spec.lower().endswith(('.md', '.txt')):
-            raise ValidationError("algorithm_spec must be a Markdown or text file")
-
-        # 期待結果のチェック
-        if not expected_result.strip():
-            raise ValidationError("expected_result cannot be empty")
 
     def _run_with_timeout(self, func_result, timeout: int):
         """タイムアウト付きで関数を実行"""
