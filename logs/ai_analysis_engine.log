@@ -719,3 +719,40 @@
 2025-09-18 13:47:46,499 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_002\core_output_plot.png
 2025-09-18 13:47:46,499 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_002
 2025-09-18 13:48:00,172 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_002: 1246 characters
+2025-09-18 14:18:46,498 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_002
+2025-09-18 14:18:50,595 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 14:18:50,597 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 14:18:50,633 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 14:18:50,636 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/アルゴリズム出力結果/2.csv with 1159 rows
+2025-09-18 14:18:50,636 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/アルゴリズム出力結果/2.csv with shape (1159, 6)
+2025-09-18 14:18:50,641 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-18 14:18:50,642 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-18 14:18:50,666 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_002
+2025-09-18 14:18:50,667 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_002
+2025-09-18 14:19:26,004 - ai_analysis_engine.ai_analysis_engine.utils.exploration_utils - INFO - LLM extracted JSON from text
+2025-09-18 14:19:26,004 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 1 hypotheses for dataset test_dataset_002
+2025-09-18 14:19:26,005 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verifying hypothesis missing_values_2 for dataset test_dataset_002
+2025-09-18 14:19:42,431 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verification completed for hypothesis missing_values_2: False
+2025-09-18 14:19:42,432 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_002
+2025-09-18 14:19:44,135 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-18 14:19:44,137 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-18 14:19:44,137 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-18 14:19:44,140 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_002
+2025-09-18 14:19:45,477 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - LLM extracted keywords: ['left_eye_open', 'right_eye_open', 'face_confidence', 'is_drowsy']... (confidence: 0.85)
+2025-09-18 14:19:46,793 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - LLM extracted frame interval: 465-593
+2025-09-18 14:19:47,492 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_002\algorithm_output_plot.png
+2025-09-18 14:19:49,073 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - LLM extracted keywords: ['left_eye_open', 'right_eye_open', 'face_confidence', 'is_drowsy']... (confidence: 0.85)
+2025-09-18 14:19:50,040 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - LLM extracted frame interval: 465-593
+2025-09-18 14:19:50,965 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_002\core_output_plot.png
+2025-09-18 14:19:50,965 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_002
+2025-09-18 14:20:03,325 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_002: 1001 characters

@@ -4,7 +4,6 @@ Generic configuration system supporting multiple algorithms
 """
 
 import os
-import re
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 from pathlib import Path
@@ -12,6 +11,12 @@ try:
     import yaml
 except ImportError:
     yaml = None
+
+from ..utils.exploration_utils import (
+    extract_columns_with_llm,
+    extract_thresholds_with_llm,
+    extract_json_with_llm
+)
 
 
 class OpenAIConfig(BaseModel):
@@ -139,7 +144,7 @@ class Config:
 
     def load_algorithm_config_from_spec(self, spec_content: str) -> AlgorithmConfig:
         """
-        Parse algorithm specification and create configuration
+        Parse algorithm specification and create configuration using LLM-based extraction
         Based on detailed analysis procedure (解析手順詳細.md)
 
         Args:
@@ -150,140 +155,108 @@ class Config:
         """
         config = AlgorithmConfig()
 
-        # Extract algorithm name and description
-        name_match = re.search(r'#+\s*([^\n]+)', spec_content)
-        if name_match:
-            config.name = name_match.group(1).strip()
+        try:
+            # Extract algorithm name and description using regex (keep this simple)
+            import re
+            name_match = re.search(r'#+\s*([^\n]+)', spec_content)
+            if name_match:
+                config.name = name_match.group(1).strip()
 
-        # Extract thresholds using pattern recognition
-        threshold_patterns = [
-            r'閾値[:\s]*([0-9.]+)',  # Japanese threshold
-            r'threshold[:\s]*([0-9.]+)',  # English threshold
-            r'([A-Z_]+_THRESHOLD)\s*[:=]\s*([0-9.]+)',  # Constant style
-            r'([a-z_]+_threshold)\s*\|\s*[^|]*\|\s*\*\*([0-9.]+)\*\*',  # Table format with **bold**
-            r'([a-z_]+_threshold)\s*[:=]\s*\*\*([0-9.]+)\*\*',  # Parameter with bold
-        ]
+            # Extract thresholds using LLM
+            thresholds = extract_thresholds_with_llm(spec_content)
+            config.thresholds.update(thresholds)
 
-        for pattern in threshold_patterns:
-            matches = re.findall(pattern, spec_content, re.IGNORECASE)
-            for match in matches:
-                if isinstance(match, tuple) and len(match) == 2:
-                    key, value = match
-                    config.thresholds[key] = float(value)
-                else:
-                    # Generic threshold
-                    config.thresholds[f"threshold_{len(config.thresholds)}"] = float(match)
+            # Extract column names using LLM
+            columns = extract_columns_with_llm(spec_content)
+            config.input_columns.extend(columns)
 
-        # Extract column names
-        column_patterns = [
-            r'列[:\s]*([a-zA-Z_][a-zA-Z0-9_]*)',  # Japanese column
-            r'column[:\s]*([a-zA-Z_][a-zA-Z0-9_]*)',  # English column
-            r'([a-zA-Z_][a-zA-Z0-9_]*)_openness',  # Eye openness pattern
-            r'([a-zA-Z_][a-zA-Z0-9_]*)_closed',  # Eye closed pattern
-            r'([a-zA-Z_][a-zA-Z0-9_]*)_confidence',  # Confidence pattern
-            r'\|\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\|\s*float',  # Table format column
-        ]
+            # Extract output columns from output specification table using LLM
+            output_section = ""
+            output_match = re.search(r'### 2\.2 出力仕様.*?(?=###|$)', spec_content, re.DOTALL)
+            if output_match:
+                output_section = output_match.group(0)
 
-        for pattern in column_patterns:
-            matches = re.findall(pattern, spec_content, re.IGNORECASE)
-            for match in matches:
-                col_name = match if isinstance(match, str) else match[0]
-                if col_name not in config.input_columns:
-                    config.input_columns.append(col_name)
+            if output_section:
+                output_columns = extract_columns_with_llm(output_section)
+                config.output_columns.extend(output_columns)
 
-        # Extract output columns from output specification table
-        output_section = ""
-        output_match = re.search(r'### 2\.2 出力仕様.*?(?=###|$)', spec_content, re.DOTALL)
-        if output_match:
-            output_section = output_match.group(0)
+            # Set default required columns if not found
+            if not config.required_columns:
+                config.required_columns = ['frame_num', 'timestamp']  # Common defaults
 
-        # Extract output fields from table
-        output_table_pattern = r'\|\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\|\s*[a-zA-Z]+\s*\|\s*[^|]*\|'
-        output_matches = re.findall(output_table_pattern, output_section, re.IGNORECASE)
-        for match in output_matches:
-            if match not in config.output_columns:
-                config.output_columns.append(match)
+            # Extract value ranges (keep simple regex for ranges)
+            range_patterns = [
+                r'([0-9.]+)\s*[-~]\s*([0-9.]+)',  # Range pattern
+                r'範囲[:\s]*([0-9.]+)\s*[-~]\s*([0-9.]+)',  # Japanese range
+            ]
 
-        # Set default required columns if not found
-        if not config.required_columns:
-            config.required_columns = ['frame_num', 'timestamp']  # Common defaults
+            for pattern in range_patterns:
+                matches = re.findall(pattern, spec_content)
+                for i, match in enumerate(matches):
+                    min_val, max_val = map(float, match)
+                    config.value_ranges[f"range_{i}"] = {"min": min_val, "max": max_val}
 
-        # Extract value ranges
-        range_patterns = [
-            r'([0-9.]+)\s*[-~]\s*([0-9.]+)',  # Range pattern
-            r'範囲[:\s]*([0-9.]+)\s*[-~]\s*([0-9.]+)',  # Japanese range
-        ]
+            # Set default value ranges for input columns if not found
+            for col in config.input_columns:
+                if col not in [k for ranges in config.value_ranges.values() for k in ranges.keys()]:
+                    # Extract default ranges from specification if available
+                    if 'openness' in col.lower():
+                        config.value_ranges[col] = {"min": 0.0, "max": 1.0}
+                    elif 'confidence' in col.lower():
+                        config.value_ranges[col] = {"min": 0.0, "max": 1.0}
+                    elif 'probability' in col.lower():
+                        config.value_ranges[col] = {"min": 0.0, "max": 1.0}
 
-        for pattern in range_patterns:
-            matches = re.findall(pattern, spec_content)
-            for i, match in enumerate(matches):
-                min_val, max_val = map(float, match)
-                config.value_ranges[f"range_{i}"] = {"min": min_val, "max": max_val}
+            # Extract valid values for categorical outputs (keep simple regex)
+            for col in config.output_columns:
+                if col in spec_content:
+                    # Look for valid values in specification (e.g., 0/1, -1/0/1, etc.)
+                    if 'detection' in col.lower() or 'result' in col.lower():
+                        # Try to extract from specification patterns
+                        valid_value_patterns = [
+                            r'値[:\s]*([-1,0-9\s]+)',  # Japanese values
+                            r'values[:\s]*([-1,0-9\s]+)',  # English values
+                            r'[-1,0-9\s]+\([^)]*\)'  # Pattern like -1(Error), 0(Normal), 1(Drowsy)
+                        ]
+                        for pattern in valid_value_patterns:
+                            matches = re.findall(pattern, spec_content, re.IGNORECASE)
+                            if matches:
+                                # Parse valid values from matches
+                                for match in matches:
+                                    values = [int(v.strip()) for v in match.split(',') if v.strip().lstrip('-').isdigit()]
+                                    if values and col not in config.valid_values:
+                                        config.valid_values[col] = sorted(list(set(values)))
 
-        # Set default value ranges for input columns if not found
-        for col in config.input_columns:
-            if col not in [k for ranges in config.value_ranges.values() for k in ranges.keys()]:
-                # Extract default ranges from specification if available
-                if 'openness' in col.lower():
-                    config.value_ranges[col] = {"min": 0.0, "max": 1.0}
-                elif 'confidence' in col.lower():
-                    config.value_ranges[col] = {"min": 0.0, "max": 1.0}
-                elif 'probability' in col.lower():
-                    config.value_ranges[col] = {"min": 0.0, "max": 1.0}
-                # For other columns, try to infer from column names or specification
+            # Extract detection patterns using LLM
+            from ..utils.exploration_utils import exploration_tool
+            detection_patterns = exploration_tool.extract_patterns_from_spec(spec_content)
+            config.detection_patterns.update(detection_patterns)
 
-        # Extract valid values for categorical outputs from specification
-        for col in config.output_columns:
-            if col in spec_content:
-                # Look for valid values in specification (e.g., 0/1, -1/0/1, etc.)
-                if 'detection' in col.lower() or 'result' in col.lower():
-                    # Try to extract from specification patterns
-                    valid_value_patterns = [
-                        r'値[:\s]*([-1,0-9\s]+)',  # Japanese values
-                        r'values[:\s]*([-1,0-9\s]+)',  # English values
-                        r'[-1,0-9\s]+\([^)]*\)'  # Pattern like -1(Error), 0(Normal), 1(Drowsy)
-                    ]
-                    for pattern in valid_value_patterns:
-                        matches = re.findall(pattern, spec_content, re.IGNORECASE)
-                        if matches:
-                            # Parse valid values from matches
-                            for match in matches:
-                                values = [int(v.strip()) for v in match.split(',') if v.strip().lstrip('-').isdigit()]
-                                if values and col not in config.valid_values:
-                                    config.valid_values[col] = sorted(list(set(values)))
+            # Add threshold-based patterns
+            for threshold_name, threshold_value in config.thresholds.items():
+                if 'time' in threshold_name.lower() or 'duration' in threshold_name.lower():
+                    pattern_name = threshold_name.lower().replace('_', ' ')
+                    config.detection_patterns[pattern_name] = {
+                        "threshold": threshold_value,
+                        "type": "time_based"
+                    }
+                elif 'threshold' in threshold_name.lower():
+                    pattern_name = threshold_name.lower().replace('_threshold', '').replace('_', ' ')
+                    config.detection_patterns[pattern_name] = {
+                        "threshold": threshold_value,
+                        "type": "value_based"
+                    }
 
-        # Extract detection patterns from specification dynamically
-        config.detection_patterns = {}
-        # Look for detection patterns in the specification
-        detection_pattern_matches = re.findall(
-            r'(?:検知|detection)[:\s]*([^。。\n]+)',
-            spec_content,
-            re.IGNORECASE
-        )
+            # Set evaluation criteria
+            config.evaluation_criteria = {
+                "detection_accuracy": "Compare algorithm output with expected detection intervals",
+                "false_positive_rate": "Calculate false detection rate in non-target intervals",
+                "temporal_precision": "Evaluate detection timing accuracy"
+            }
 
-        # Extract threshold-based patterns
-        for threshold_name, threshold_value in config.thresholds.items():
-            if 'time' in threshold_name.lower() or 'duration' in threshold_name.lower():
-                pattern_name = threshold_name.lower().replace('_', ' ')
-                config.detection_patterns[pattern_name] = {
-                    "threshold": threshold_value,
-                    "type": "time_based"
-                }
-            elif 'threshold' in threshold_name.lower():
-                pattern_name = threshold_name.lower().replace('_threshold', '').replace('_', ' ')
-                config.detection_patterns[pattern_name] = {
-                    "threshold": threshold_value,
-                    "type": "value_based"
-                }
-
-        # Set evaluation criteria
-        config.evaluation_criteria = {
-            "detection_accuracy": "Compare algorithm output with expected detection intervals",
-            "false_positive_rate": "Calculate false detection rate in non-target intervals",
-            "temporal_precision": "Evaluate detection timing accuracy"
-        }
-
-        return config
+        except Exception as e:
+            # LLM extraction failed - raise error instead of fallback
+            raise RuntimeError(f"Algorithm configuration extraction failed: {e}") from e
 
     def load_algorithm_config_from_file(self, spec_file_path: str) -> AlgorithmConfig:
         """

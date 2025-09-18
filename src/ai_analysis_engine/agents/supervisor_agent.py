@@ -10,6 +10,7 @@ from langchain_openai import ChatOpenAI
 from ..config import config
 from ..models.state import AnalysisState, DatasetInfo
 from ..utils.logger import get_logger
+from ..utils.exploration_utils import extract_json_with_llm
 
 logger = get_logger(__name__)
 
@@ -185,20 +186,16 @@ class SupervisorAgent:
     def _parse_llm_response(self, response: str) -> Dict[str, Any]:
         """Parse LLM response to extract decision"""
         try:
-            # Extract JSON from response
+            # Use LLM-based JSON extraction only
             import json
-            import re
-
-            # Find JSON in response
-            json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                # Try to find JSON without markdown
-                json_match = re.search(r'\{.*\}', response, re.DOTALL)
-                json_str = json_match.group(0) if json_match else response
-
-            decision = json.loads(json_str)
+            decision = extract_json_with_llm(response)
+            if decision is None:
+                # Return fallback decision
+                decision = {
+                    "next_action": "data_checker",
+                    "reason": "No valid decision found in LLM response",
+                    "dataset_id": None
+                }
 
             # Validate required fields
             required_fields = ["next_action", "reason"]

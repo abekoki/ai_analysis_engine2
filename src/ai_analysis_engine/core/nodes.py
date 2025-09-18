@@ -10,6 +10,7 @@ from ..models.types import DataSummary, ConsistencyCheckResult, Hypothesis, Veri
 from ..tools.rag_tool import RAGTool
 from ..tools.repl_tool import REPLTool
 from ..utils.logger import get_logger
+from ..utils.exploration_utils import extract_frame_range_with_llm
 from ..config import config
 
 logger = get_logger(__name__)
@@ -427,14 +428,17 @@ class ConsistencyCheckerNode:
             else:
                 results["checks_performed"].append(f"Dataframe {name}: {len(df)} rows")
 
-        # Parse expected text: frame interval and keyword
-        m = re.search(r"フレーム(?:区間)?\s*(\d+)\s*[-〜~]\s*(\d+)", expected)
-        if m:
-            start_f = int(m.group(1))
-            end_f = int(m.group(2))
-            if start_f > end_f:
-                start_f, end_f = end_f, start_f
-            results["target_interval"] = {"start": start_f, "end": end_f}
+        # Parse expected text: frame interval and keyword using LLM
+        try:
+            frame_range = extract_frame_range_with_llm(expected)
+            if frame_range:
+                start_f, end_f = frame_range
+                if start_f > end_f:
+                    start_f, end_f = end_f, start_f
+                results["target_interval"] = {"start": start_f, "end": end_f}
+        except RuntimeError as e:
+            logger.warning(f"Frame range extraction failed: {e}")
+            # Continue without target interval
 
         # Dynamic detection of required patterns based on algorithm config
         require_exists = False

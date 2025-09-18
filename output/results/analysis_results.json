@@ -720,7 +720,7 @@
           "hypothesis_id": "error_fallback",
           "success": false,
           "result_details": "Verification failed: [Errno 22] Invalid argument: '_input\\\\sample_data\\\\アルゴリズム出力結果\\x02.csv'",
-          "code_executed": "# Dynamic verification code generated based on algorithm specifications\nimport pandas as pd\nimport numpy as np\nfrom typing import Dict, Any\n\nalgo_df = pd.read_csv('_input\\sample_data\\アルゴリズム出力結果\\2.csv')\ncore_df = pd.read_csv('_input\\sample_data\\コアライブラリ出力結果\\WIN_20250819_10_12_55_Pro_analysis.csv')\n\n# Algorithm configuration loaded from specification\nleft_eye_close_threshold = 0.1\nright_eye_close_threshold = 0.1\nface_conf_threshold = 0.75\n\n# Algorithm bug detection verification\nalgorithm_validation = {}\n\n# Check threshold compliance\nif 'leye_close_openness' in core_df.columns:\n    below_threshold = (core_df['leye_close_openness'] < 0.1).sum()\n    algorithm_validation['left_eye_close_threshold_compliance'] = {'below_threshold': int(below_threshold), 'threshold': 0.1}\nif 'reye_close_openness' in core_df.columns:\n    below_threshold = (core_df['reye_close_openness'] < 0.1).sum()\n    algorithm_validation['right_eye_close_threshold_compliance'] = {'below_threshold': int(below_threshold), 'threshold': 0.1}\n\n# Format results for analysis\nverification_results = {\n    'hypothesis_type': 'algorithm_bug',\n    'verification_plan': '''Basic verification of hypothesis: Analysis failed, potential algorithm issue''',\n    'data_quality_checks': data_quality_checks,\n    'algorithm_validation': algorithm_validation,\n    'threshold_analysis': threshold_analysis,\n    'pattern_analysis': pattern_analysis\n}\n\nprint('Verification completed')\nprint(f'Hypothesis: {hypothesis.description}')\nprint(f'Results: {verification_results}')",
+          "code_executed": "# Dynamic verification code generated based on algorithm specifications\nimport pandas as pd\nimport numpy as np\nfrom typing import Dict, Any\n\nalgo_df = pd.read_csv('_input\\sample_data\\アルゴリズム出力結果\\2.csv')\ncore_df = pd.read_csv('_input\\sample_data\\コアライブラリ出力結果\\WIN_20250819_10_12_55_Pro_analysis.csv')\n\n# Algorithm configuration loaded from specification\n\n# Algorithm bug detection verification\nalgorithm_validation = {}\n\n# Check threshold compliance\n\n# Format results for analysis\nverification_results = {\n    'hypothesis_type': 'algorithm_bug',\n    'verification_plan': '''Basic verification of hypothesis: Analysis failed, potential algorithm issue''',\n    'data_quality_checks': data_quality_checks,\n    'algorithm_validation': algorithm_validation,\n    'threshold_analysis': threshold_analysis,\n    'pattern_analysis': pattern_analysis\n}\n\nprint('Verification completed')\nprint(f'Hypothesis: {hypothesis.description}')\nprint(f'Results: {verification_results}')",
           "output_data": null,
           "error_message": "[Errno 22] Invalid argument: '_input\\\\sample_data\\\\アルゴリズム出力結果\\x02.csv'",
           "execution_time": null
@@ -749,7 +749,7 @@
       "algorithm_code": "vectorstore_algorithm_code",
       "evaluation_code": "vectorstore_evaluation_code"
     },
-    "last_updated": "2025-09-18T13:46:37.489776",
+    "last_updated": "2025-09-18T14:17:26.805086",
     "is_initialized": true
   },
   "workflow_step": "verifier",
@@ -1442,7 +1442,7 @@
   },
   "final_reports": [],
   "errors": [],
-  "start_time": "2025-09-18T13:46:37.418398",
-  "end_time": "2025-09-18T13:46:39.227618",
+  "start_time": "2025-09-18T14:17:26.732022",
+  "end_time": "2025-09-18T14:17:28.824492",
   "output_dir": null
 }

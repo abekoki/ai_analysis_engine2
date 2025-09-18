@@ -2,11 +2,12 @@
 Reporter Agent - Generates final analysis reports
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pathlib import Path
 from typing import TYPE_CHECKING
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from ..config.config import AlgorithmConfig
@@ -19,6 +20,19 @@ from ..tools.rag_tool import RAGTool
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+class FrameInterval(BaseModel):
+    """Pydantic model for extracting frame intervals from natural language text"""
+    start_frame: Optional[int] = Field(None, description="Start frame number of the evaluation interval")
+    end_frame: Optional[int] = Field(None, description="End frame number of the evaluation interval")
+    has_interval: bool = Field(False, description="Whether a frame interval was found in the text")
+
+
+class PlotKeywords(BaseModel):
+    """Pydantic model for extracting relevant keywords for plotting from specifications"""
+    keywords: List[str] = Field(default_factory=list, description="List of relevant keywords for plotting")
+    confidence_score: float = Field(0.0, description="Confidence score of the extracted keywords (0.0 to 1.0)")
 
 
 class ReporterAgent:
@@ -123,52 +137,110 @@ class ReporterAgent:
             logger.error(f"Error extracting plot keywords: {e}")
             return ['confidence', 'score', 'result', 'detection']
 
-    def _extract_relevant_keywords_from_specs(self, dataset: DatasetInfo, algorithm_config: 'AlgorithmConfig') -> List[str]:
+    def _extract_relevant_keywords_with_llm(self, spec_content: str, algorithm_config: 'AlgorithmConfig') -> List[str]:
         """
-        Extract relevant keywords for plotting from specifications (static extraction without LLM)
+        Extract relevant keywords for plotting from specifications using LLM
+
+        Args:
+            spec_content: Specification content as string
+            algorithm_config: Algorithm configuration
+
+        Returns:
+            List of relevant keywords for plotting
+        """
+        try:
+            # Create prompt for keyword extraction
+            keyword_extraction_prompt = f"""あなたはアルゴリズム仕様書からプロットに適したキーワードを抽出する専門家です。
+以下の仕様書の内容から、プロット作成に適した重要なキーワードを抽出してください。
+
+仕様書内容:
+{spec_content[:3000]}
+
+抽出するキーワードの基準:
+1. 数値データとしてプロット可能な指標名（例: confidence, score, probability）
+2. 検知結果を示す用語（例: detection, result, status）
+3. 信頼度を示す用語（例: confidence, reliability, accuracy）
+4. 分析の主要な出力指標名
+
+以下のJSON形式で結果を返してください:
+{{
+    "keywords": ["keyword1", "keyword2", "keyword3"],
+    "confidence_score": 0.85
+}}
+
+例:
+{{"keywords": ["confidence", "score", "detection", "probability"], "confidence_score": 0.9}}
+
+キーワードは2文字以上20文字以内の英数字のみにしてください。"""
+
+            # Call LLM
+            response = self.llm.invoke(keyword_extraction_prompt)
+
+            # Parse JSON response
+            import json
+            try:
+                result = json.loads(response.content.strip())
+                if result.get('keywords') and len(result['keywords']) > 0:
+                    # Filter and clean keywords
+                    clean_keywords = []
+                    for keyword in result['keywords']:
+                        # Clean the keyword
+                        clean_keyword = str(keyword).lower().strip()
+                        # Remove very short or very long keywords
+                        if 2 <= len(clean_keyword) <= 20:
+                            clean_keywords.append(clean_keyword)
+
+                    if clean_keywords:
+                        confidence = result.get('confidence_score', 0.0)
+                        logger.info(f"LLM extracted keywords: {clean_keywords[:10]}... (confidence: {confidence})")
+                        return clean_keywords
+
+            except json.JSONDecodeError:
+                logger.warning("Failed to parse LLM keyword response as JSON")
+
+            # Fallback to regex-based extraction
+            return self._extract_relevant_keywords_with_regex(spec_content, algorithm_config)
+
+        except Exception as e:
+            raise RuntimeError(f"LLM keyword extraction failed: {e}") from e
+
+    def _extract_relevant_keywords_with_regex(self, spec_content: str, algorithm_config: 'AlgorithmConfig') -> List[str]:
+        """
+        Fallback method to extract keywords using regex patterns
+
+        Args:
+            spec_content: Specification content as string
+            algorithm_config: Algorithm configuration
+
+        Returns:
+            List of relevant keywords
         """
         try:
             keywords = set()
 
-            # Read specification files
-            spec_files = []
-            if hasattr(dataset, 'algorithm_spec_md') and dataset.algorithm_spec_md:
-                spec_files.append(dataset.algorithm_spec_md)
-            if hasattr(dataset, 'evaluation_spec_md') and dataset.evaluation_spec_md:
-                spec_files.append(dataset.evaluation_spec_md)
+            # Extract column names from tables (markdown format)
+            import re
 
-            # Extract keywords from spec files
-            for spec_file in spec_files:
-                try:
-                    with open(spec_file, 'r', encoding='utf-8') as f:
-                        content = f.read().lower()
+            # Look for table rows with column names
+            table_rows = re.findall(r'\|([^\|]+)\|([^\|]+)\|([^\|]+)\|', spec_content)
+            for row in table_rows:
+                for cell in row:
+                    cell = cell.strip()
+                    if cell and not cell.startswith('-') and len(cell) > 1:
+                        # Clean the cell content
+                        clean_cell = re.sub(r'[*_`]', '', cell)
+                        if clean_cell and not clean_cell.isdigit():
+                            keywords.add(clean_cell.lower())
 
-                        # Extract column names from tables (markdown format)
-                        import re
-
-                        # Look for table rows with column names
-                        table_rows = re.findall(r'\|([^\|]+)\|([^\|]+)\|([^\|]+)\|', content)
-                        for row in table_rows:
-                            for cell in row:
-                                cell = cell.strip()
-                                if cell and not cell.startswith('-') and len(cell) > 1:
-                                    # Clean the cell content
-                                    clean_cell = re.sub(r'[*_`]', '', cell)
-                                    if clean_cell and not clean_cell.isdigit():
-                                        keywords.add(clean_cell.lower())
-
-                        # Extract words that look like column names or metrics
-                        words = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', content)
-                        for word in words:
-                            word_lower = word.lower()
-                            # Filter for likely column names or metrics
-                            if (len(word) > 2 and
-                                not word_lower in ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'had', 'with', 'will', 'have', 'this', 'that', 'from', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time', 'very', 'when', 'come', 'here', 'just', 'like', 'long', 'make', 'many', 'over', 'such', 'take', 'than', 'them', 'well', 'were'] and
-                                not word_lower.startswith(('spec', 'eval', 'test', 'data', 'file', 'path', 'name', 'desc', 'info', 'type', 'form', 'list', 'item', 'valu', 'rang', 'min', 'max', 'def', 'num', 'str', 'int', 'flo', 'bool'))):
-                                keywords.add(word_lower)
-
-                except Exception as e:
-                    logger.warning(f"Failed to read spec file {spec_file}: {e}")
+            # Extract words that look like column names or metrics
+            words = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', spec_content)
+            for word in words:
+                word_lower = word.lower()
+                # Filter for likely column names or metrics
+                if (len(word) > 2 and
+                    not word_lower in ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'had', 'with', 'will', 'have', 'this', 'that', 'from', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time', 'very', 'when', 'come', 'here', 'just', 'like', 'long', 'make', 'many', 'over', 'such', 'take', 'than', 'them', 'well', 'were'] and
+                    not word_lower.startswith(('spec', 'eval', 'test', 'data', 'file', 'path', 'name', 'desc', 'info', 'type', 'form', 'list', 'item', 'valu', 'rang', 'min', 'max', 'def', 'num', 'str', 'int', 'flo', 'bool'))):
+                    keywords.add(word_lower)
 
             # Add algorithm config output columns
             if hasattr(algorithm_config, 'output_columns'):
@@ -192,15 +264,123 @@ class ReporterAgent:
             keyword_list = [k for k in keyword_list if 2 <= len(k) <= 20]
 
             if keyword_list:
-                logger.info(f"Extracted keywords from specs: {keyword_list[:10]}...")  # Show first 10
+                logger.info(f"Regex extracted keywords: {keyword_list[:10]}...")
                 return keyword_list
             else:
                 # Fallback keywords
                 return ['confidence', 'score', 'result', 'detection', 'probability']
 
         except Exception as e:
-            logger.error(f"Error extracting relevant keywords: {e}")
+            logger.error(f"Error extracting keywords with regex: {e}")
             return ['confidence', 'score', 'result', 'detection', 'probability']
+
+    def _extract_relevant_keywords_from_specs(self, dataset: DatasetInfo, algorithm_config: 'AlgorithmConfig') -> List[str]:
+        """
+        Extract relevant keywords for plotting from specifications using LLM with fallback to regex
+        """
+        try:
+            # Read specification files
+            spec_files = []
+            if hasattr(dataset, 'algorithm_spec_md') and dataset.algorithm_spec_md:
+                spec_files.append(dataset.algorithm_spec_md)
+            if hasattr(dataset, 'evaluation_spec_md') and dataset.evaluation_spec_md:
+                spec_files.append(dataset.evaluation_spec_md)
+
+            if not spec_files:
+                return ['confidence', 'score', 'result', 'detection', 'probability']
+
+            # Combine all spec content
+            combined_content = ""
+            for spec_file in spec_files:
+                try:
+                    with open(spec_file, 'r', encoding='utf-8') as f:
+                        combined_content += f.read() + "\n"
+                except Exception as e:
+                    logger.warning(f"Failed to read spec file {spec_file}: {e}")
+
+            if combined_content:
+                # Use LLM-based extraction only
+                return self._extract_relevant_keywords_with_llm(combined_content, algorithm_config)
+            else:
+                return ['confidence', 'score', 'result', 'detection', 'probability']
+
+        except Exception as e:
+            raise RuntimeError(f"Keyword extraction from specs failed: {e}") from e
+
+    def _extract_frame_interval_with_llm(self, text: str) -> tuple[Optional[int], Optional[int]]:
+        """
+        Extract frame interval from natural language text using LLM
+
+        Args:
+            text: Natural language text containing frame interval information
+
+        Returns:
+            Tuple of (start_frame, end_frame) or (None, None) if not found
+        """
+        try:
+            # Create prompt for frame interval extraction
+            frame_extraction_prompt = f"""あなたはテキストからフレーム区間を抽出する専門家です。
+以下のテキストから、評価対象となるフレーム区間を抽出してください。
+
+テキスト内容:
+{text}
+
+以下のJSON形式で結果を返してください:
+{{
+    "start_frame": 開始フレーム番号（整数、見つからない場合はnull）,
+    "end_frame": 終了フレーム番号（整数、見つからない場合はnull）,
+    "has_interval": フレーム区間が見つかったかどうか（true/false）
+}}
+
+例:
+{{"start_frame": 465, "end_frame": 593, "has_interval": true}}
+
+テキストにフレーム区間が明記されていない場合は、start_frameとend_frameをnullにし、has_intervalをfalseにしてください。
+フレーム区間は「フレーム区間XXX-YYY」や「XXX〜YYYフレーム」などの形式で表現されることが多いです。"""
+
+            # Call LLM
+            response = self.llm.invoke(frame_extraction_prompt)
+
+            # Parse JSON response
+            import json
+            try:
+                result = json.loads(response.content.strip())
+                if result.get('has_interval') and result.get('start_frame') is not None and result.get('end_frame') is not None:
+                    start_frame = int(result['start_frame'])
+                    end_frame = int(result['end_frame'])
+                    logger.info(f"LLM extracted frame interval: {start_frame}-{end_frame}")
+                    return start_frame, end_frame
+                else:
+                    logger.info("No frame interval found in text using LLM")
+                    return None, None
+            except json.JSONDecodeError:
+                logger.warning("Failed to parse LLM response as JSON")
+                return None, None
+
+        except Exception as e:
+            raise RuntimeError(f"LLM frame interval extraction failed: {e}") from e
+
+    def _extract_frame_interval_with_regex(self, text: str) -> tuple[Optional[int], Optional[int]]:
+        """
+        Fallback method to extract frame interval using regex patterns
+
+        Args:
+            text: Text to search for frame intervals
+
+        Returns:
+            Tuple of (start_frame, end_frame) or (None, None) if not found
+        """
+        import re
+
+        # Extract frame range from expected result using regex
+        frame_match = re.search(r'フレーム(?:区間)?\s*(\d+)\s*[-〜~]\s*(\d+)', text)
+        if frame_match:
+            start_frame = int(frame_match.group(1))
+            end_frame = int(frame_match.group(2))
+            logger.info(f"Regex extracted frame interval: {start_frame}-{end_frame}")
+            return start_frame, end_frame
+
+        return None, None
 
     def __init_report_prompt(self):
         """Initialize the report prompt template"""
@@ -445,15 +625,11 @@ class ReporterAgent:
                     start_frame = interval.get('start')
                     end_frame = interval.get('end')
 
-            # If not found in consistency_check, extract from expected_result directly
+            # If not found in consistency_check, extract from expected_result using LLM
             if start_frame is None and dataset and hasattr(dataset, 'expected_result'):
-                import re
                 expected = dataset.expected_result
-                # Extract frame range from expected result
-                frame_match = re.search(r'フレーム(?:区間)?\s*(\d+)\s*[-〜~]\s*(\d+)', expected)
-                if frame_match:
-                    start_frame = int(frame_match.group(1))
-                    end_frame = int(frame_match.group(2))
+                # Extract frame range from expected result using LLM
+                start_frame, end_frame = self._extract_frame_interval_with_llm(expected)
 
             if start_frame is not None and end_frame is not None:
                 target_interval_code = f"""
@@ -584,15 +760,11 @@ plt.close()
                     start_frame = interval.get('start')
                     end_frame = interval.get('end')
 
-            # If not found in consistency_check, extract from expected_result directly
+            # If not found in consistency_check, extract from expected_result using LLM
             if start_frame is None and dataset and hasattr(dataset, 'expected_result'):
-                import re
                 expected = dataset.expected_result
-                # Extract frame range from expected result
-                frame_match = re.search(r'フレーム(?:区間)?\s*(\d+)\s*[-〜~]\s*(\d+)', expected)
-                if frame_match:
-                    start_frame = int(frame_match.group(1))
-                    end_frame = int(frame_match.group(2))
+                # Extract frame range from expected result using LLM
+                start_frame, end_frame = self._extract_frame_interval_with_llm(expected)
 
             if start_frame is not None and end_frame is not None:
                 target_interval_code = f"""

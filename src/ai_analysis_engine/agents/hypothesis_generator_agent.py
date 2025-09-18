@@ -11,6 +11,7 @@ from ..models.state import DatasetInfo
 from ..models.types import Hypothesis, HypothesisType
 from ..tools.rag_tool import RAGTool
 from ..utils.logger import get_logger
+from ..utils.exploration_utils import extract_json_with_llm
 
 logger = get_logger(__name__)
 
@@ -307,13 +308,11 @@ class HypothesisGeneratorAgent:
 
         try:
             import json
-            import re
 
-            # Extract JSON from response
-            json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-                data = json.loads(json_str)
+            # Use LLM-based JSON extraction only
+            data = extract_json_with_llm(response)
+            if data is None:
+                return hypotheses
 
                 for hypo_data in data.get("hypotheses", []):
                     try:

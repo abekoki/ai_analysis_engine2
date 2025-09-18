@@ -6,9 +6,9 @@ import pandas as pd
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import json
-import re
 
 from .logger import get_logger
+from .exploration_utils import extract_json_with_llm
 
 logger = get_logger(__name__)
 
@@ -89,7 +89,7 @@ def ensure_directory(dir_path: str) -> None:
 
 def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
     """
-    Extract JSON object from text
+    Extract JSON object from text using LLM
 
     Args:
         text: Text containing JSON
@@ -98,17 +98,15 @@ def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
         Extracted JSON object or None
     """
     try:
-        # Find JSON-like content in text
-        json_pattern = r'\{.*\}'
-        match = re.search(json_pattern, text, re.DOTALL)
+        # Use LLM-based extraction only
+        result = extract_json_with_llm(text)
+        if result is not None:
+            logger.info("Successfully extracted JSON from text using LLM")
+            return result
 
-        if match:
-            json_str = match.group()
-            return json.loads(json_str)
         return None
     except Exception as e:
-        logger.warning(f"Failed to extract JSON from text: {e}")
-        return None
+        raise RuntimeError(f"LLM-based JSON extraction failed: {e}") from e
 
 
 def clean_text(text: str) -> str:

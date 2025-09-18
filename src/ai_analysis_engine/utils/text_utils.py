@@ -2,18 +2,23 @@
 Text processing utilities
 """
 
-import re
 import json
 from typing import Dict, Any, Optional, List
 
 from .logger import get_logger
+from .exploration_utils import (
+    extract_json_with_llm,
+    extract_frame_range_with_llm,
+    extract_columns_with_llm,
+    parse_condition_with_llm
+)
 
 logger = get_logger(__name__)
 
 
 def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
     """
-    Extract JSON object from text response
+    Extract JSON object from text response using LLM
 
     Args:
         text: Text containing JSON
@@ -22,22 +27,18 @@ def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
         Extracted JSON object or None
     """
     try:
-        # Find JSON-like content in text
-        json_pattern = r'\{.*\}'
-        match = re.search(json_pattern, text, re.DOTALL)
+        # Use LLM-based extraction only
+        result = extract_json_with_llm(text)
+        if result is not None:
+            logger.info("Successfully extracted JSON from text using LLM")
+            return result
 
-        if match:
-            json_str = match.group()
-            # Clean up common issues
-            json_str = json_str.replace('```json', '').replace('```', '')
-            return json.loads(json_str)
         return None
     except json.JSONDecodeError as e:
         logger.warning(f"JSON decode error: {e}")
         return None
     except Exception as e:
-        logger.warning(f"Failed to extract JSON from text: {e}")
-        return None
+        raise RuntimeError(f"LLM-based JSON extraction failed: {e}") from e
 
 
 def clean_text(text: str) -> str:
@@ -111,7 +112,7 @@ def split_into_chunks(text: str, chunk_size: int = 1000, overlap: int = 200) -> 
 
 def extract_frame_range(text: str) -> Optional[tuple]:
     """
-    Extract frame range from natural language text
+    Extract frame range from natural language text using LLM
 
     Args:
         text: Natural language text describing frame range
@@ -119,30 +120,21 @@ def extract_frame_range(text: str) -> Optional[tuple]:
     Returns:
         Tuple of (start_frame, end_frame) or None
     """
-    # Patterns for frame ranges
-    patterns = [
-        r'フレーム\s*(\d+)\s*から\s*(\d+)',
-        r'frame\s*(\d+)\s*to\s*(\d+)',
-        r'(\d+)\s*-\s*(\d+)\s*フレーム',
-        r'frames?\s+(\d+)\s*(?:to|-)\s*(\d+)'
-    ]
+    try:
+        # Use LLM-based extraction only
+        result = extract_frame_range_with_llm(text)
+        if result is not None:
+            logger.info(f"Successfully extracted frame range using LLM: {result}")
+            return result
 
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            try:
-                start = int(match.group(1))
-                end = int(match.group(2))
-                return (start, end)
-            except (ValueError, IndexError):
-                continue
-
-    return None
+        return None
+    except Exception as e:
+        raise RuntimeError(f"LLM-based frame range extraction failed: {e}") from e
 
 
 def extract_column_info(text: str) -> List[str]:
     """
-    Extract column names mentioned in text
+    Extract column names mentioned in text using LLM
 
     Args:
         text: Text mentioning column names
@@ -150,30 +142,21 @@ def extract_column_info(text: str) -> List[str]:
     Returns:
         List of column names found
     """
-    # Common column patterns
-    patterns = [
-        r'列\s*[\'\"]([^\'\"]+)[\'\"]',
-        r'column\s*[\'\"]([^\'\"]+)[\'\"]',
-        r'カラム\s*[\'\"]([^\'\"]+)[\'\"]',
-        r'フィールド\s*[\'\"]([^\'\"]+)[\'\"]'
-    ]
+    try:
+        # Use LLM-based extraction only
+        columns = extract_columns_with_llm(text)
+        if columns:
+            logger.info(f"Successfully extracted columns using LLM: {columns}")
+            return columns
 
-    columns = []
-    for pattern in patterns:
-        matches = re.findall(pattern, text, re.IGNORECASE)
-        columns.extend(matches)
-
-    # Also try to find unquoted column names (more risky)
-    unquoted_pattern = r'\b(?:列|column|カラム|フィールド)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
-    unquoted_matches = re.findall(unquoted_pattern, text, re.IGNORECASE)
-    columns.extend(unquoted_matches)
-
-    return list(set(columns))  # Remove duplicates
+        return []
+    except Exception as e:
+        raise RuntimeError(f"LLM-based column extraction failed: {e}") from e
 
 
 def extract_expected_value(text: str) -> Optional[str]:
     """
-    Extract expected value from natural language description
+    Extract expected value from natural language description using LLM
 
     Args:
         text: Natural language description
@@ -181,26 +164,21 @@ def extract_expected_value(text: str) -> Optional[str]:
     Returns:
         Expected value description
     """
-    # Look for patterns like "should be 1", "should contain", "must have", etc.
-    patterns = [
-        r'(?:期待値|expected|期待される|should be|must be|値は)\s*[:]*\s*(.+?)(?:\。|\.|$|です|である)',
-        r'(?:検知結果|detection result|結果は)\s*[:]*\s*(.+?)(?:\。|\.|$|です|である)',
-        r'(?:条件|condition|ルール|rule)\s*[:]*\s*(.+?)(?:\。|\.|$|です|である)'
-    ]
+    try:
+        # Use LLM-based condition parsing only
+        condition = parse_condition_with_llm(text)
+        if condition and condition.get('condition'):
+            logger.info(f"Successfully extracted expected value using LLM: {condition['condition']}")
+            return clean_text(condition['condition'])
 
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
-        if match:
-            value = match.group(1).strip()
-            if value:
-                return clean_text(value)
-
-    return None
+        return None
+    except Exception as e:
+        raise RuntimeError(f"LLM-based expected value extraction failed: {e}") from e
 
 
 def parse_boolean_condition(text: str) -> Optional[Dict[str, Any]]:
     """
-    Parse boolean conditions from natural language
+    Parse boolean conditions from natural language using LLM
 
     Args:
         text: Natural language condition
@@ -208,25 +186,16 @@ def parse_boolean_condition(text: str) -> Optional[Dict[str, Any]]:
     Returns:
         Dictionary with parsed condition or None
     """
-    # Simple pattern matching for common conditions
-    conditions = {
-        'equals': r'(?:==|=|equals?|等しい|同じ)\s*(\d+)',
-        'greater_than': r'(?:>|より大きい|greater than)\s*(\d+)',
-        'less_than': r'(?:<|より小さい|less than)\s*(\d+)',
-        'contains': r'含む?\s*(.+?)(?:\s|$)',
-        'exists': r'存在する?\s*(.+?)(?:\s|$)'
-    }
+    try:
+        # Use LLM-based condition parsing only
+        condition = parse_condition_with_llm(text)
+        if condition:
+            logger.info(f"Successfully parsed boolean condition using LLM: {condition}")
+            return condition
 
-    for condition_type, pattern in conditions.items():
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return {
-                'type': condition_type,
-                'value': match.group(1) if match.groups() else True,
-                'original_text': text
-            }
-
-    return None
+        return None
+    except Exception as e:
+        raise RuntimeError(f"LLM-based boolean condition parsing failed: {e}") from e
 
 
 def calculate_text_similarity(text1: str, text2: str) -> float:
