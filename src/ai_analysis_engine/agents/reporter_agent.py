@@ -434,14 +434,29 @@ class ReporterAgent:
 
             # Extract target interval from dataset if available
             target_interval_code = ""
+            start_frame = None
+            end_frame = None
+
+            # First, try to get from consistency_check
             if dataset and hasattr(dataset, 'consistency_check') and dataset.consistency_check:
                 cc = dataset.consistency_check
                 if isinstance(cc, dict) and 'target_interval' in cc and cc['target_interval']:
                     interval = cc['target_interval']
                     start_frame = interval.get('start')
                     end_frame = interval.get('end')
-                    if start_frame is not None and end_frame is not None:
-                        target_interval_code = f"""
+
+            # If not found in consistency_check, extract from expected_result directly
+            if start_frame is None and dataset and hasattr(dataset, 'expected_result'):
+                import re
+                expected = dataset.expected_result
+                # Extract frame range from expected result
+                frame_match = re.search(r'フレーム(?:区間)?\s*(\d+)\s*[-〜~]\s*(\d+)', expected)
+                if frame_match:
+                    start_frame = int(frame_match.group(1))
+                    end_frame = int(frame_match.group(2))
+
+            if start_frame is not None and end_frame is not None:
+                target_interval_code = f"""
 # Filter data to target interval
 if 'frame' in df.columns:
     df = df[(df['frame'] >= {start_frame}) & (df['frame'] <= {end_frame})]
@@ -462,6 +477,10 @@ df = pd.read_csv(r'{data_path}')
 
 # Filter to target interval if available
 {target_interval_code}
+
+# Define frame range variables for axis limits
+start_frame = {start_frame if start_frame is not None else 'None'}
+end_frame = {end_frame if end_frame is not None else 'None'}
 
 # Thresholds configuration
 {thresholds_code}
@@ -503,6 +522,18 @@ for i, col in enumerate(plot_columns):
     axes[i].set_title(f'{{col}} - Algorithm Output')
     axes[i].set_xlabel(x_label)
     axes[i].set_ylabel('Value')
+
+        # Set x-axis limits to the target interval if available
+    if start_frame != 'None' and end_frame != 'None':
+        if 'frame_num' in df.columns:
+            x_min = max(df['frame_num'].min(), int(start_frame))
+            x_max = min(df['frame_num'].max(), int(end_frame))
+            axes[i].set_xlim(x_min, x_max)
+        elif 'frame' in df.columns:
+            x_min = max(df['frame'].min(), int(start_frame))
+            x_max = min(df['frame'].max(), int(end_frame))
+            axes[i].set_xlim(x_min, x_max)
+
     axes[i].legend()
     axes[i].grid(True, alpha=0.3)
 
@@ -542,14 +573,29 @@ plt.close()
 
             # Extract target interval from dataset if available
             target_interval_code = ""
+            start_frame = None
+            end_frame = None
+
+            # First, try to get from consistency_check
             if dataset and hasattr(dataset, 'consistency_check') and dataset.consistency_check:
                 cc = dataset.consistency_check
                 if isinstance(cc, dict) and 'target_interval' in cc and cc['target_interval']:
                     interval = cc['target_interval']
                     start_frame = interval.get('start')
                     end_frame = interval.get('end')
-                    if start_frame is not None and end_frame is not None:
-                        target_interval_code = f"""
+
+            # If not found in consistency_check, extract from expected_result directly
+            if start_frame is None and dataset and hasattr(dataset, 'expected_result'):
+                import re
+                expected = dataset.expected_result
+                # Extract frame range from expected result
+                frame_match = re.search(r'フレーム(?:区間)?\s*(\d+)\s*[-〜~]\s*(\d+)', expected)
+                if frame_match:
+                    start_frame = int(frame_match.group(1))
+                    end_frame = int(frame_match.group(2))
+
+            if start_frame is not None and end_frame is not None:
+                target_interval_code = f"""
 # Filter data to target interval
 if 'frame' in df.columns:
     df = df[(df['frame'] >= {start_frame}) & (df['frame'] <= {end_frame})]
@@ -570,6 +616,10 @@ df = pd.read_csv(r'{data_path}')
 
 # Filter to target interval if available
 {target_interval_code}
+
+# Define frame range variables for axis limits
+start_frame = {start_frame if start_frame is not None else 'None'}
+end_frame = {end_frame if end_frame is not None else 'None'}
 
 # Input columns and thresholds configuration
 input_cols = {input_cols_str}
@@ -659,6 +709,18 @@ else:
         axes[i].set_title(f'{{col}} - Core Input Feature')
         axes[i].set_xlabel(x_label)
         axes[i].set_ylabel('Value')
+
+        # Set x-axis limits to the target interval if available
+    if start_frame != 'None' and end_frame != 'None':
+        if 'frame_num' in df.columns:
+            x_min = max(df['frame_num'].min(), int(start_frame))
+            x_max = min(df['frame_num'].max(), int(end_frame))
+            axes[i].set_xlim(x_min, x_max)
+        elif 'frame' in df.columns:
+            x_min = max(df['frame'].min(), int(start_frame))
+            x_max = min(df['frame'].max(), int(end_frame))
+            axes[i].set_xlim(x_min, x_max)
+
         axes[i].legend()
         axes[i].grid(True, alpha=0.3)
 

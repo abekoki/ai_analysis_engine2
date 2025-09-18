@@ -682,3 +682,40 @@
 2025-09-18 13:39:05,586 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_002\core_output_plot.png
 2025-09-18 13:39:05,586 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_002
 2025-09-18 13:39:18,450 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_002: 1112 characters
+2025-09-18 13:47:04,927 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_002
+2025-09-18 13:47:09,315 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:47:09,317 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:47:09,318 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:47:09,321 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/アルゴリズム出力結果/2.csv with 1159 rows
+2025-09-18 13:47:09,321 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/アルゴリズム出力結果/2.csv with shape (1159, 6)
+2025-09-18 13:47:09,326 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-18 13:47:09,326 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-18 13:47:09,386 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_002
+2025-09-18 13:47:09,386 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_002
+2025-09-18 13:47:26,552 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-18 13:47:26,553 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-18 13:47:26,554 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-18 13:47:26,554 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 1 hypotheses for dataset test_dataset_002
+2025-09-18 13:47:26,554 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verifying hypothesis missing_values_2 for dataset test_dataset_002
+2025-09-18 13:47:45,692 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verification completed for hypothesis missing_values_2: False
+2025-09-18 13:47:45,693 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_002
+2025-09-18 13:47:45,695 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-18 13:47:45,695 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-18 13:47:45,695 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-18 13:47:45,697 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_002
+2025-09-18 13:47:45,698 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Extracted keywords from specs: ['n14', 'core_lib_output_id', 'git', 'framenum', 'using', 'algorithm_output_dir', '1.00', 'csv', 'inputdata', 'jst']...
+2025-09-18 13:47:45,862 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_002\algorithm_output_plot.png
+2025-09-18 13:47:45,863 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Extracted keywords from specs: ['n14', 'core_lib_output_id', 'git', 'framenum', 'using', 'algorithm_output_dir', '1.00', 'csv', 'inputdata', 'jst']...
+2025-09-18 13:47:46,499 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_002\core_output_plot.png
+2025-09-18 13:47:46,499 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_002
+2025-09-18 13:48:00,172 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_002: 1246 characters
