@@ -38,6 +38,12 @@ def main():
             print("📊 Sample data found, running analysis...")
 
             # Use sample data for testing - aligned with test_dataset.md
+            # Check for command line output directory argument
+            import sys
+            output_dir = None
+            if len(sys.argv) > 1 and sys.argv[1] == "--output-dir":
+                output_dir = sys.argv[2] if len(sys.argv) > 2 else None
+
             state = engine.create_analysis_request(
                 algorithm_outputs=[str(Path("_input/sample_data/アルゴリズム出力結果/2.csv"))],
                 core_outputs=[str(Path("_input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv"))],
@@ -48,7 +54,8 @@ def main():
                                 str(sample_data_dir / "src/drowsy_detection/drowsy_detector.py"),
                                 str(sample_data_dir / "src/drowsy_detection/eye_state.py")]],
                 evaluation_codes=[[str(Path("_input/sample_data/evaluation_engine/main.py"))]],
-                dataset_ids=["test_dataset"]
+                dataset_ids=["test_dataset"],
+                output_dir=output_dir
             )
 
             results = engine.run_analysis(state)

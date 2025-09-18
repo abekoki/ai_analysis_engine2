@@ -15,6 +15,7 @@ from ..config import config
 from ..models.state import DatasetInfo
 from ..models.types import Hypothesis
 from ..tools.repl_tool import REPLTool
+from ..tools.rag_tool import RAGTool
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -33,14 +34,180 @@ class ReporterAgent:
         )
 
         self.repl_tool = REPLTool()
+        self.rag_tool = RAGTool()
+        self.__init_report_prompt()
 
+    def _extract_plot_keywords_from_specs(self, dataset: DatasetInfo, algorithm_config: 'AlgorithmConfig') -> List[str]:
+        """
+        Extract relevant keywords for plotting from specifications using RAG
+        """
+        try:
+            # Query RAG system to find relevant columns and metrics mentioned in specs
+            spec_files = []
+            if hasattr(dataset, 'algorithm_spec_md') and dataset.algorithm_spec_md:
+                spec_files.append(dataset.algorithm_spec_md)
+            if hasattr(dataset, 'evaluation_spec_md') and dataset.evaluation_spec_md:
+                spec_files.append(dataset.evaluation_spec_md)
+
+            if not spec_files:
+                # Fallback to basic keywords if no specs available
+                return ['confidence', 'score', 'result', 'detection']
+
+            # Build RAG query to extract relevant plotting keywords
+            rag_query = f"""
+            このアルゴリズム仕様書から、プロットに適した重要な指標や列名を抽出してください。
+            特に以下の点を考慮して抽出してください：
+            1. 数値データとしてプロット可能な指標
+            2. 信頼度や確率を示す指標
+            3. 検知結果を示す指標
+            4. 分析の主要な出力指標
+
+            仕様書の内容に基づいて、プロットに適したキーワードをリスト形式で返してください。
+            """
+
+            # Get relevant information from specs
+            relevant_info = ""
+            for spec_file in spec_files:
+                try:
+                    with open(spec_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        # Extract relevant sections
+                        if '出力仕様' in content or 'output' in content.lower():
+                            relevant_info += content
+                except Exception as e:
+                    logger.warning(f"Failed to read spec file {spec_file}: {e}")
+
+            if relevant_info:
+                # Use LLM to extract keywords from the specifications
+                extraction_prompt = f"""
+                以下のアルゴリズム仕様書から、プロットに適した重要な指標や列名を抽出してください。
+
+                仕様書内容:
+                {relevant_info[:2000]}  # Limit content length
+
+                抽出するキーワードの基準:
+                1. 数値データとしてプロット可能な指標名
+                2. 信頼度・確率を示す用語
+                3. 検知結果を示す用語
+                4. 分析の主要な出力指標
+
+                結果はPythonリスト形式で返してください。
+                例: ['confidence', 'score', 'detection_result', 'probability']
+                """
+
+                try:
+                    response = self.llm.invoke(extraction_prompt)
+                    # Parse the response to extract keywords
+                    response_text = response.content.strip()
+
+                    # Try to extract list from response
+                    import re
+                    list_match = re.search(r'\[([^\]]+)\]', response_text)
+                    if list_match:
+                        keywords_str = list_match.group(1)
+                        keywords = [k.strip().strip("'\"") for k in keywords_str.split(',')]
+                        keywords = [k for k in keywords if k]  # Remove empty strings
+                        if keywords:
+                            logger.info(f"Extracted plot keywords from specs: {keywords}")
+                            return keywords
+
+                except Exception as e:
+                    logger.warning(f"Failed to extract keywords from specs: {e}")
+
+            # Fallback keywords if extraction fails
+            fallback_keywords = ['confidence', 'score', 'result', 'detection', 'probability']
+            logger.info(f"Using fallback plot keywords: {fallback_keywords}")
+            return fallback_keywords
+
+        except Exception as e:
+            logger.error(f"Error extracting plot keywords: {e}")
+            return ['confidence', 'score', 'result', 'detection']
+
+    def _extract_relevant_keywords_from_specs(self, dataset: DatasetInfo, algorithm_config: 'AlgorithmConfig') -> List[str]:
+        """
+        Extract relevant keywords for plotting from specifications (static extraction without LLM)
+        """
+        try:
+            keywords = set()
+
+            # Read specification files
+            spec_files = []
+            if hasattr(dataset, 'algorithm_spec_md') and dataset.algorithm_spec_md:
+                spec_files.append(dataset.algorithm_spec_md)
+            if hasattr(dataset, 'evaluation_spec_md') and dataset.evaluation_spec_md:
+                spec_files.append(dataset.evaluation_spec_md)
+
+            # Extract keywords from spec files
+            for spec_file in spec_files:
+                try:
+                    with open(spec_file, 'r', encoding='utf-8') as f:
+                        content = f.read().lower()
+
+                        # Extract column names from tables (markdown format)
+                        import re
+
+                        # Look for table rows with column names
+                        table_rows = re.findall(r'\|([^\|]+)\|([^\|]+)\|([^\|]+)\|', content)
+                        for row in table_rows:
+                            for cell in row:
+                                cell = cell.strip()
+                                if cell and not cell.startswith('-') and len(cell) > 1:
+                                    # Clean the cell content
+                                    clean_cell = re.sub(r'[*_`]', '', cell)
+                                    if clean_cell and not clean_cell.isdigit():
+                                        keywords.add(clean_cell.lower())
+
+                        # Extract words that look like column names or metrics
+                        words = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', content)
+                        for word in words:
+                            word_lower = word.lower()
+                            # Filter for likely column names or metrics
+                            if (len(word) > 2 and
+                                not word_lower in ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'had', 'with', 'will', 'have', 'this', 'that', 'from', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time', 'very', 'when', 'come', 'here', 'just', 'like', 'long', 'make', 'many', 'over', 'such', 'take', 'than', 'them', 'well', 'were'] and
+                                not word_lower.startswith(('spec', 'eval', 'test', 'data', 'file', 'path', 'name', 'desc', 'info', 'type', 'form', 'list', 'item', 'valu', 'rang', 'min', 'max', 'def', 'num', 'str', 'int', 'flo', 'bool'))):
+                                keywords.add(word_lower)
+
+                except Exception as e:
+                    logger.warning(f"Failed to read spec file {spec_file}: {e}")
+
+            # Add algorithm config output columns
+            if hasattr(algorithm_config, 'output_columns'):
+                for col in algorithm_config.output_columns:
+                    if col:
+                        # Extract base name from column (remove prefixes/suffixes)
+                        base_name = col.lower()
+                        base_name = re.sub(r'^(left_|right_|leye_|reye_|face_)', '', base_name)
+                        base_name = re.sub(r'(_openness|_closed|_confidence|_score|_result)$', '', base_name)
+                        keywords.add(base_name)
+
+            # Add threshold names
+            if hasattr(algorithm_config, 'thresholds'):
+                for threshold_name in algorithm_config.thresholds.keys():
+                    threshold_base = threshold_name.lower().replace('_threshold', '').replace('_', '')
+                    keywords.add(threshold_base)
+
+            # Convert to list and filter
+            keyword_list = list(keywords)
+            # Remove very short or very long keywords
+            keyword_list = [k for k in keyword_list if 2 <= len(k) <= 20]
+
+            if keyword_list:
+                logger.info(f"Extracted keywords from specs: {keyword_list[:10]}...")  # Show first 10
+                return keyword_list
+            else:
+                # Fallback keywords
+                return ['confidence', 'score', 'result', 'detection', 'probability']
+
+        except Exception as e:
+            logger.error(f"Error extracting relevant keywords: {e}")
+            return ['confidence', 'score', 'result', 'detection', 'probability']
+
+    def __init_report_prompt(self):
+        """Initialize the report prompt template"""
         self.report_prompt = ChatPromptTemplate.from_template("""
 あなたは汎用レポート作成エージェントです。このシステムは様々なアルゴリズムに対して適用可能な汎用AI分析エンジンです。
 
-**重要指示**:
-- 特定のアルゴリズム（眠気検知、顔認識など）に固有の用語は使用せず、汎用的な表現を使用してください
-- 信頼度条件、前提条件、品質条件などの汎用的な用語を使用してください
-- アルゴリズム仕様に基づきつつ、特定のアルゴリズムに依存しない表現を心がけてください
+
 
 
 
@@ -224,11 +391,11 @@ class ReporterAgent:
             core_data_path = dataset.core_output_csv
 
             if algorithm_data_path and core_data_path:
-                # Generate algorithm output plot
-                self._generate_algorithm_output_plot(algorithm_data_path, algorithm_config, plots_dir / "algorithm_output_plot.png")
+                # Generate algorithm output plot with target interval filtering
+                self._generate_algorithm_output_plot(algorithm_data_path, algorithm_config, plots_dir / "algorithm_output_plot.png", dataset)
 
-                # Generate core output plot
-                self._generate_core_output_plot(core_data_path, algorithm_config, plots_dir / "core_output_plot.png")
+                # Generate core output plot with target interval filtering
+                self._generate_core_output_plot(core_data_path, algorithm_config, plots_dir / "core_output_plot.png", dataset)
 
                 logger.info(f"Generated plots for dataset {dataset.id}")
             else:
@@ -237,7 +404,7 @@ class ReporterAgent:
         except Exception as e:
             logger.error(f"Failed to generate plots for dataset {dataset.id}: {e}")
 
-    def _generate_algorithm_output_plot(self, data_path: str, algorithm_config: 'AlgorithmConfig', output_path: Path):
+    def _generate_algorithm_output_plot(self, data_path: str, algorithm_config: 'AlgorithmConfig', output_path: Path, dataset: DatasetInfo = None):
         """Generate plot for algorithm output data with thresholds"""
         try:
             # Extract threshold information outside f-string
@@ -249,6 +416,9 @@ class ReporterAgent:
                 thresholds_code = f"thresholds = [{', '.join(thresholds_list)}]"
             else:
                 thresholds_code = "thresholds = []"
+
+            # Extract relevant keywords from specifications for dynamic column selection
+            relevant_keywords = self._extract_relevant_keywords_from_specs(dataset, algorithm_config)
 
             # Determine plot columns and thresholds dynamically
             plot_columns_code = ""
@@ -262,6 +432,25 @@ class ReporterAgent:
             else:
                 plot_columns_code = "plot_columns = df.columns[:min(5, len(df.columns))]"  # Default to first 5 columns
 
+            # Extract target interval from dataset if available
+            target_interval_code = ""
+            if dataset and hasattr(dataset, 'consistency_check') and dataset.consistency_check:
+                cc = dataset.consistency_check
+                if isinstance(cc, dict) and 'target_interval' in cc and cc['target_interval']:
+                    interval = cc['target_interval']
+                    start_frame = interval.get('start')
+                    end_frame = interval.get('end')
+                    if start_frame is not None and end_frame is not None:
+                        target_interval_code = f"""
+# Filter data to target interval
+if 'frame' in df.columns:
+    df = df[(df['frame'] >= {start_frame}) & (df['frame'] <= {end_frame})]
+elif 'frame_num' in df.columns:
+    df = df[(df['frame_num'] >= {start_frame}) & (df['frame_num'] <= {end_frame})]
+# Reset index after filtering
+df = df.reset_index(drop=True)
+"""
+
             # Create plot generation code
             plot_code = f"""
 import pandas as pd
@@ -270,6 +459,9 @@ import numpy as np
 
 # Load data
 df = pd.read_csv(r'{data_path}')
+
+# Filter to target interval if available
+{target_interval_code}
 
 # Thresholds configuration
 {thresholds_code}
@@ -287,9 +479,19 @@ fig, axes = plt.subplots(len(plot_columns), 1, figsize=(12, 4*len(plot_columns))
 if len(plot_columns) == 1:
     axes = [axes]
 
+# Determine x-axis data (use frame column if available, otherwise index)
+x_data = df.index
+x_label = 'Frame'
+if 'frame' in df.columns:
+    x_data = df['frame']
+    x_label = 'Frame Number'
+elif 'frame_num' in df.columns:
+    x_data = df['frame_num']
+    x_label = 'Frame Number'
+
 # Plot each column with thresholds
 for i, col in enumerate(plot_columns):
-    axes[i].plot(df.index, df[col], label=col, linewidth=2)
+    axes[i].plot(x_data, df[col], label=col, linewidth=2)
 
     # Add threshold lines if available and column matches threshold
     for threshold_name, threshold_value in thresholds:
@@ -299,7 +501,7 @@ for i, col in enumerate(plot_columns):
             axes[i].axhline(y=threshold_value, color='red', linestyle='--', label=label_text)
 
     axes[i].set_title(f'{{col}} - Algorithm Output')
-    axes[i].set_xlabel('Frame')
+    axes[i].set_xlabel(x_label)
     axes[i].set_ylabel('Value')
     axes[i].legend()
     axes[i].grid(True, alpha=0.3)
@@ -319,7 +521,7 @@ plt.close()
         except Exception as e:
             logger.error(f"Error generating algorithm output plot: {e}")
 
-    def _generate_core_output_plot(self, data_path: str, algorithm_config: 'AlgorithmConfig', output_path: Path):
+    def _generate_core_output_plot(self, data_path: str, algorithm_config: 'AlgorithmConfig', output_path: Path, dataset: DatasetInfo = None):
         """Generate plot for core output data with thresholds"""
         try:
             # Extract input columns and thresholds outside f-string
@@ -335,6 +537,28 @@ plt.close()
             else:
                 thresholds_code = "thresholds = []"
 
+            # Extract relevant keywords from specifications for dynamic column selection
+            relevant_keywords = self._extract_relevant_keywords_from_specs(dataset, algorithm_config)
+
+            # Extract target interval from dataset if available
+            target_interval_code = ""
+            if dataset and hasattr(dataset, 'consistency_check') and dataset.consistency_check:
+                cc = dataset.consistency_check
+                if isinstance(cc, dict) and 'target_interval' in cc and cc['target_interval']:
+                    interval = cc['target_interval']
+                    start_frame = interval.get('start')
+                    end_frame = interval.get('end')
+                    if start_frame is not None and end_frame is not None:
+                        target_interval_code = f"""
+# Filter data to target interval
+if 'frame' in df.columns:
+    df = df[(df['frame'] >= {start_frame}) & (df['frame'] <= {end_frame})]
+elif 'frame_num' in df.columns:
+    df = df[(df['frame_num'] >= {start_frame}) & (df['frame_num'] <= {end_frame})]
+# Reset index after filtering
+df = df.reset_index(drop=True)
+"""
+
             # Create plot generation code
             plot_code = f"""
 import pandas as pd
@@ -344,14 +568,34 @@ import numpy as np
 # Load data
 df = pd.read_csv(r'{data_path}')
 
+# Filter to target interval if available
+{target_interval_code}
+
 # Input columns and thresholds configuration
 input_cols = {input_cols_str}
+relevant_keywords = {relevant_keywords}
 {thresholds_code}
 
-# Determine columns to plot from input columns
+# Determine columns to plot from input columns with keyword prioritization
 plot_cols = []
 if input_cols:
-    plot_cols = [col for col in input_cols if col in df.columns]
+    # Prioritize columns based on extracted keywords
+    if relevant_keywords:
+        prioritized_cols = []
+        other_cols = []
+
+        for col in input_cols:
+            if col in df.columns:
+                col_lower = col.lower()
+                if any(keyword in col_lower for keyword in relevant_keywords):
+                    prioritized_cols.append(col)
+                else:
+                    other_cols.append(col)
+
+        # Combine prioritized and other columns
+        plot_cols = prioritized_cols + other_cols[:max(0, 6 - len(prioritized_cols))]
+    else:
+        plot_cols = [col for col in input_cols if col in df.columns][:6]
 
 # If no input columns specified or none exist, determine columns dynamically based on data types and threshold names
 if not plot_cols:
@@ -391,9 +635,19 @@ else:
     if len(plot_cols) == 1:
         axes = [axes]
 
+    # Determine x-axis data (use frame column if available, otherwise index)
+    x_data = df.index
+    x_label = 'Frame'
+    if 'frame' in df.columns:
+        x_data = df['frame']
+        x_label = 'Frame Number'
+    elif 'frame_num' in df.columns:
+        x_data = df['frame_num']
+        x_label = 'Frame Number'
+
     # Plot each input column with thresholds
     for i, col in enumerate(plot_cols):
-        axes[i].plot(df.index, df[col], label=col, linewidth=2)
+        axes[i].plot(x_data, df[col], label=col, linewidth=2)
 
         # Add threshold lines if available and column matches threshold
         for threshold_name, threshold_value in thresholds:
@@ -403,7 +657,7 @@ else:
                 axes[i].axhline(y=threshold_value, color='red', linestyle='--', label=label_text)
 
         axes[i].set_title(f'{{col}} - Core Input Feature')
-        axes[i].set_xlabel('Frame')
+        axes[i].set_xlabel(x_label)
         axes[i].set_ylabel('Value')
         axes[i].legend()
         axes[i].grid(True, alpha=0.3)

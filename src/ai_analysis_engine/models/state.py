@@ -63,6 +63,7 @@ class AnalysisState(BaseModel):
     # Metadata
     start_time: Optional[str] = Field(default=None, description="Workflow start timestamp")
     end_time: Optional[str] = Field(default=None, description="Workflow end timestamp")
+    output_dir: Optional[str] = Field(default=None, description="Custom output directory for results")
 
     class Config:
         arbitrary_types_allowed = True

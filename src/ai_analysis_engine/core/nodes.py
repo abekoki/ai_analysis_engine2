@@ -178,7 +178,7 @@ class DataCheckerNode:
 
             # Create plots
             logger.info("Creating data plots")
-            plot_paths = self._create_data_plots(dataframes, current_dataset.id)
+            plot_paths = self._create_data_plots(dataframes, current_dataset.id, state)
             logger.info(f"Created plot paths: {plot_paths}")
 
             # Query column information from specs
@@ -227,13 +227,14 @@ class DataCheckerNode:
 
         return state
 
-    def _create_data_plots(self, dataframes: Dict[str, Any], dataset_id: str) -> Dict[str, str]:
+    def _create_data_plots(self, dataframes: Dict[str, Any], dataset_id: str, state: Any = None) -> Dict[str, str]:
         """Create time series plots for the data"""
         plot_paths = {}
 
         try:
             # Create output directory
-            plots_dir = config.output_dir / "plots" / dataset_id
+            from ..config import config as global_config
+            plots_dir = global_config.output_dir / "plots" / dataset_id
             plots_dir.mkdir(parents=True, exist_ok=True)
 
             for name, df in dataframes.items():
@@ -370,7 +371,20 @@ class ConsistencyCheckerNode:
 
             # Perform consistency checks with algorithm config
             algorithm_config = getattr(state, 'algorithm_config', None)
-            consistency_results = self._check_consistency(dataframes, expected_result, algorithm_config)
+            try:
+                consistency_results = self._check_consistency(dataframes, expected_result, algorithm_config)
+            except Exception as e:
+                logger.error(f"Consistency checking failed: {e}")
+                consistency_results = {
+                    "expected_interpretation": expected_result,
+                    "checks_performed": ["Consistency check failed due to error"],
+                    "overall_consistent": False,
+                    "issues": [f"Consistency check error: {str(e)}"],
+                    "target_interval": None,
+                    "require_exists": False,
+                    "detection": {"exists": False, "longest_run": 0, "runs": []},
+                    "input_column_stats": {}
+                }
 
             # Update dataset state
             current_dataset.consistency_check = consistency_results
@@ -474,10 +488,10 @@ class ConsistencyCheckerNode:
                 analysis_cols = [col for col in core_df.columns
                                if core_df[col].dtype in ['int64', 'float64'] and col != frame_col]
 
-            if analysis_cols and frame_col and results["target_interval"]:
+            if analysis_cols and frame_col and results["target_interval"] and frame_col in core_df.columns:
                 s = results["target_interval"]["start"]
                 e = results["target_interval"]["end"]
-                sub = core_df[(core_df[frame_col] >= s) & (core_df[frame_col] <= e)]
+                sub = core_df[(core_df[frame_col] >= s) & (core_df[frame_col] <= e)].copy()
 
                 if len(sub) > 0:
                     stats = {}
@@ -524,10 +538,10 @@ class ConsistencyCheckerNode:
             return results
 
         # Restrict to interval if provided
-        if results["target_interval"]:
+        if results["target_interval"] and frame_col and frame_col in algo_df.columns:
             s = results["target_interval"]["start"]
             e = results["target_interval"]["end"]
-            algo_df = algo_df[(algo_df[frame_col] >= s) & (algo_df[frame_col] <= e)]
+            algo_df = algo_df[(algo_df[frame_col] >= s) & (algo_df[frame_col] <= e)].copy()
 
         # Build detection series dynamically based on algorithm config
         detection_series = None

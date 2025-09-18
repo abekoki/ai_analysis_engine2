@@ -93,8 +93,21 @@ uv run python run_analysis.py \
 uv run python -m ai_analysis_engine.main \
   --algorithm-outputs data/algo_output.csv \
   --core-outputs data/core_output.csv \
+  --algorithm-specs docs/algo_spec.md \
   --evaluation-specs docs/eval_spec.md \
   --expected-results "フレーム100-200の間に値1が存在すること"
+```
+
+#### 3.1: カスタム出力ディレクトリ指定
+```bash
+# 出力ディレクトリを指定して実行
+uv run python -m ai_analysis_engine.main \
+  --algorithm-outputs data/algo_output.csv \
+  --core-outputs data/core_output.csv \
+  --algorithm-specs docs/algo_spec.md \
+  --evaluation-specs docs/eval_spec.md \
+  --expected-results "フレーム100-200の間に値1が存在すること" \
+  --output-dir "/path/to/custom/output"
 ```
 
 ### コマンドライン引数の詳細
@@ -109,6 +122,7 @@ uv run python -m ai_analysis_engine.main \
 | `--evaluation-codes` | ❌ | 評価環境実装コードファイルのパス（複数指定可） | `eval/main.py eval/utils.py` |
 | `--expected-results` | ✅ | 期待される結果の自然言語記述（複数指定可） | `"フレーム100-200の間に値1が存在すること"` |
 | `--dataset-ids` | ❌ | データセットのID（オプション、省略時は自動生成） | `dataset_1` |
+| `--output-dir` | ❌ | 結果出力ディレクトリ（デフォルト: ./output） | `./my_results` |
 
 #### 引数の対応関係
 - `--algorithm-outputs`, `--core-outputs`, `--algorithm-specs`, `--evaluation-specs`, `--expected-results` は同じ順序で対応
@@ -280,8 +294,22 @@ uv run python run_analysis.py \
   --dataset-ids "generic_analysis_test"
 ```
 
+#### 例1.1: カスタム出力ディレクトリの指定
+```bash
+# 出力ディレクトリを指定して分析実行
+uv run python run_analysis.py \
+  --algorithm-outputs "_input/sample_data/アルゴリズム出力結果/2.csv" \
+  --core-outputs "_input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv" \
+  --algorithm-specs "_input/sample_data/algorithm/01_algorithm_specification/AS_drowsy_detection.md" \
+  --evaluation-specs "_input/sample_data/evaluation_engine/docs/EVALUATION_SPEC.md" \
+  --expected-results "指定された評価区間内で期待される結果が得られること" \
+  --dataset-ids "generic_analysis_test" \
+  --output-dir "./analysis_results"
+```
+
 **特徴:**
 - アルゴリズム仕様書から自動的に閾値・列名を抽出
+- ⭐ **課題分析対象範囲に絞ったプロット生成**: 期待値から解析対象区間を自動抽出してプロット
 - 動的に最適なプロット生成
 - ユーザーに直感的にわかりやすいレポート作成
 
@@ -340,9 +368,10 @@ analysis_config = {
         "フレーム100-500の間に異常値が検知され、"
         "フレーム600-1000の間に回復パターンが確認できること"
     ],
-    "algorithm_codes": [["src/custom/algo.py", "src/custom/utils.py"]],
-    "evaluation_codes": [["eval/custom/main.py"]],
-    "dataset_ids": ["custom_analysis"]
+        "algorithm_codes": [["src/custom/algo.py", "src/custom/utils.py"]],
+        "evaluation_codes": [["eval/custom/main.py"]],
+        "dataset_ids": ["custom_analysis"],
+        "output_dir": "./custom_results"  # オプション: カスタム出力ディレクトリ
 }
 
 # 分析実行
@@ -804,6 +833,8 @@ output/
 - **コアライブラリ出力グラフ**: 生データの時系列推移
 - **ファイル名形式**: `{original_filename}_timeseries.png`
 - **対象列**: 自動検知された数値列
+- **対象範囲**: ⭐ **課題分析対象範囲に自動絞り込み**（期待値から解析区間を抽出）
+- **X軸**: フレーム番号（対象範囲絞り込み時は適切なフレーム番号表示）
 - **グラフ種類**: 折れ線グラフ（matplotlib/seaborn使用）
 
 ### 出力結果の活用例

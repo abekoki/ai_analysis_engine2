@@ -525,3 +525,160 @@
 2025-09-17 15:20:56,109 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_001\core_output_plot.png
 2025-09-17 15:20:56,110 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
 2025-09-17 15:21:08,530 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1190 characters
+2025-09-18 12:54:55,397 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-18 12:54:55,703 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Data analysis failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: dummy_key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-09-18 12:54:55,704 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-18 12:54:55,857 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - ERROR - Hypothesis generation failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: dummy_key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-09-18 12:54:55,858 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verifying hypothesis error_fallback for dataset test_dataset_001
+2025-09-18 12:54:56,007 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - WARNING - Failed to generate verification plan: Error code: 401 - {'error': {'message': 'Incorrect API key provided: dummy_key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-09-18 12:54:56,038 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verification completed for hypothesis error_fallback: False
+2025-09-18 12:54:56,039 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-18 12:54:56,041 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-18 12:54:56,041 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-18 12:54:56,042 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-18 12:54:56,058 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-18 12:54:56,212 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-18 12:54:56,961 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_001\core_output_plot.png
+2025-09-18 12:54:56,961 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-18 12:54:57,136 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Report generation failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: dummy_key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-09-18 13:04:28,780 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-18 13:04:29,062 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Data analysis failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: dummy_key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-09-18 13:04:29,063 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-18 13:04:29,211 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - ERROR - Hypothesis generation failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: dummy_key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-09-18 13:04:29,212 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verifying hypothesis error_fallback for dataset test_dataset_001
+2025-09-18 13:04:29,373 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - WARNING - Failed to generate verification plan: Error code: 401 - {'error': {'message': 'Incorrect API key provided: dummy_key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-09-18 13:04:29,411 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verification completed for hypothesis error_fallback: False
+2025-09-18 13:04:29,411 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-18 13:04:29,413 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-18 13:04:29,413 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-18 13:04:29,413 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-18 13:04:29,426 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-18 13:04:29,714 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-18 13:04:30,512 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_001\core_output_plot.png
+2025-09-18 13:04:30,512 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-18 13:04:30,661 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - ERROR - Report generation failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: dummy_key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+2025-09-18 13:06:18,794 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_001
+2025-09-18 13:06:22,214 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:06:22,216 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:06:22,218 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:06:22,221 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/アルゴリズム出力結果/4.csv with 1347 rows
+2025-09-18 13:06:22,221 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/アルゴリズム出力結果/4.csv with shape (1347, 6)
+2025-09-18 13:06:22,226 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with 1347 rows
+2025-09-18 13:06:22,227 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv with shape (1347, 29)
+2025-09-18 13:06:22,288 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_001
+2025-09-18 13:06:22,289 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_001
+2025-09-18 13:06:49,558 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-18 13:06:49,558 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-18 13:06:49,558 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-18 13:06:49,559 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 0 hypotheses for dataset test_dataset_001
+2025-09-18 13:06:49,559 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_001
+2025-09-18 13:06:49,561 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-18 13:06:49,561 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-18 13:06:49,562 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-18 13:06:49,579 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_001
+2025-09-18 13:06:49,733 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_001\algorithm_output_plot.png
+2025-09-18 13:06:50,512 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_001\core_output_plot.png
+2025-09-18 13:06:50,513 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_001
+2025-09-18 13:07:03,496 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_001: 1217 characters
+2025-09-18 13:10:12,227 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_002
+2025-09-18 13:10:15,521 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:10:15,523 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:10:15,525 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:10:15,535 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/アルゴリズム出力結果/2.csv with 1159 rows
+2025-09-18 13:10:15,536 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/アルゴリズム出力結果/2.csv with shape (1159, 6)
+2025-09-18 13:10:15,540 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-18 13:10:15,540 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-18 13:10:15,603 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_002
+2025-09-18 13:10:15,604 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_002
+2025-09-18 13:10:33,434 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-18 13:10:33,435 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-18 13:10:33,436 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-18 13:10:33,436 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 1 hypotheses for dataset test_dataset_002
+2025-09-18 13:10:33,437 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verifying hypothesis missing_values_2 for dataset test_dataset_002
+2025-09-18 13:10:50,431 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verification completed for hypothesis missing_values_2: False
+2025-09-18 13:10:50,431 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_002
+2025-09-18 13:10:50,433 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-18 13:10:50,433 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-18 13:10:50,433 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-18 13:10:50,436 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_002
+2025-09-18 13:10:50,574 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_002\algorithm_output_plot.png
+2025-09-18 13:10:51,254 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_002\core_output_plot.png
+2025-09-18 13:10:51,254 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_002
+2025-09-18 13:11:00,471 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_002: 1040 characters
+2025-09-18 13:38:33,778 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Starting data analysis for dataset test_dataset_002
+2025-09-18 13:38:37,543 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:38:37,545 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:38:37,547 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - ERROR - Tool execution failed: 'str' object has no attribute 'parent_run_id'
+2025-09-18 13:38:37,550 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/アルゴリズム出力結果/2.csv with 1159 rows
+2025-09-18 13:38:37,550 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/アルゴリズム出力結果/2.csv with shape (1159, 6)
+2025-09-18 13:38:37,555 - ai_analysis_engine.ai_analysis_engine.utils.file_utils - INFO - Successfully read CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with 1159 rows
+2025-09-18 13:38:37,555 - ai_analysis_engine.ai_analysis_engine.tools.repl_tool - INFO - Loaded CSV _input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv with shape (1159, 29)
+2025-09-18 13:38:37,615 - ai_analysis_engine.ai_analysis_engine.agents.data_checker_agent - INFO - Data analysis completed for dataset test_dataset_002
+2025-09-18 13:38:37,615 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generating hypotheses for dataset test_dataset_002
+2025-09-18 13:38:52,114 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'high_confidence' is not a valid HypothesisType
+2025-09-18 13:38:52,115 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'medium_confidence' is not a valid HypothesisType
+2025-09-18 13:38:52,115 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - WARNING - Invalid hypothesis data: 'low_confidence' is not a valid HypothesisType
+2025-09-18 13:38:52,116 - ai_analysis_engine.ai_analysis_engine.agents.hypothesis_generator_agent - INFO - Generated 1 hypotheses for dataset test_dataset_002
+2025-09-18 13:38:52,117 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verifying hypothesis missing_values_2 for dataset test_dataset_002
+2025-09-18 13:39:04,800 - ai_analysis_engine.ai_analysis_engine.agents.verifier_agent - INFO - Verification completed for hypothesis missing_values_2: False
+2025-09-18 13:39:04,800 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating report for dataset test_dataset_002
+2025-09-18 13:39:04,802 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded algorithm spec: 4718 characters
+2025-09-18 13:39:04,802 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Loaded evaluation spec: 5880 characters
+2025-09-18 13:39:04,802 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Algorithm spec preview: # 連続閉眼検知アルゴリズム仕様書 (AS_drowsy_detection)
+
+## 1. 概要・目的
+
+### 1.1 アルゴリズム名
+- 連続閉眼検知アルゴリズム (Continuous Eye Closure Detection)
+- 略称: AS_drowsy_detection
+- バージョン: v0.1.1
+
+### 1.2 目的・背景
+- 左右の目の開眼度 (0.0 = 完全閉眼 
+2025-09-18 13:39:04,804 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generating visualization plots for dataset test_dataset_002
+2025-09-18 13:39:04,805 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Extracted keywords from specs: ['left_eye_open', 'update_info', 'config', 'reye_openness', 'gpu', 'networks', 'github', 'continuousclosetime', 'https', 'フレーム番号']...
+2025-09-18 13:39:04,929 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated algorithm output plot: output\results\reports\plots\test_dataset_002\algorithm_output_plot.png
+2025-09-18 13:39:04,930 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Extracted keywords from specs: ['left_eye_open', 'update_info', 'config', 'reye_openness', 'gpu', 'networks', 'github', 'continuousclosetime', 'https', 'フレーム番号']...
+2025-09-18 13:39:05,586 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated core output plot: output\results\reports\plots\test_dataset_002\core_output_plot.png
+2025-09-18 13:39:05,586 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated plots for dataset test_dataset_002
+2025-09-18 13:39:18,450 - ai_analysis_engine.ai_analysis_engine.agents.reporter_agent - INFO - Generated report for dataset test_dataset_002: 1112 characters

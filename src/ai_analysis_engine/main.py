@@ -61,7 +61,8 @@ class AIAnalysisEngine:
                               expected_results: List[str],
                               algorithm_codes: Optional[List[List[str]]] = None,
                               evaluation_codes: Optional[List[List[str]]] = None,
-                              dataset_ids: Optional[List[str]] = None) -> AnalysisState:
+                              dataset_ids: Optional[List[str]] = None,
+                              output_dir: Optional[str] = None) -> AnalysisState:
         """
         Create an analysis request from input files
 
@@ -74,6 +75,7 @@ class AIAnalysisEngine:
             algorithm_codes: Optional list of lists containing algorithm implementation code files
             evaluation_codes: Optional list of lists containing evaluation environment code files
             dataset_ids: Optional list of dataset IDs
+            output_dir: Optional custom output directory for results
 
         Returns:
             AnalysisState object ready for processing
@@ -126,7 +128,8 @@ class AIAnalysisEngine:
             datasets=datasets,
             spec_documents=all_spec_docs,
             code_documents=all_code_docs,
-            start_time=self._get_current_time()
+            start_time=self._get_current_time(),
+            output_dir=output_dir
         )
 
         self.logger.info(f"Created analysis request with {len(datasets)} datasets")
@@ -155,7 +158,7 @@ class AIAnalysisEngine:
             result["end_time"] = self._get_current_time()
 
             # Save results
-            self._save_results(result)
+            self._save_results(result, getattr(state, 'output_dir', None))
 
             self.logger.info("Analysis workflow completed successfully")
             return result
@@ -168,10 +171,13 @@ class AIAnalysisEngine:
                 "end_time": self._get_current_time()
             }
 
-    def _save_results(self, results: Dict[str, Any]) -> None:
+    def _save_results(self, results: Dict[str, Any], custom_output_dir: Optional[str] = None) -> None:
         """Save analysis results to files"""
-        output_dir = config.output_dir / "results"
-        output_dir.mkdir(exist_ok=True)
+        if custom_output_dir:
+            output_dir = Path(custom_output_dir) / "results"
+        else:
+            output_dir = config.output_dir / "results"
+        output_dir.mkdir(exist_ok=True, parents=True)
 
         # Save individual reports first (independent of JSON saving)
         try:
@@ -343,6 +349,8 @@ def main():
                        help="Expected results (natural language)")
     parser.add_argument("--dataset-ids", nargs="+",
                        help="Dataset IDs (optional)")
+    parser.add_argument("--output-dir", default=None,
+                       help="Output directory for results (default: ./output)")
 
     args = parser.parse_args()
 
@@ -375,7 +383,8 @@ def main():
             expected_results=args.expected_results,
             algorithm_codes=algorithm_codes,
             evaluation_codes=evaluation_codes,
-            dataset_ids=args.dataset_ids
+            dataset_ids=args.dataset_ids,
+            output_dir=args.output_dir
         )
 
         # Run analysis

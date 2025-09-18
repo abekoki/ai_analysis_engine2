@@ -95,10 +95,26 @@ def test_dataset_creation():
 
     try:
         # Create test dataset
+        # dataset = DatasetInfo(
+        #     id="test_dataset_001",
+        #     algorithm_output_csv="_input/sample_data/アルゴリズム出力結果/4.csv",
+        #     core_output_csv="_input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv",
+        #     algorithm_spec_md="_input/sample_data/algorithm/01_algorithm_specification/AS_drowsy_detection.md",
+        #     algorithm_code_files=[
+        #         "_input/sample_data/algorithm/src/drowsy_detection/core/drowsy_detetector.py",
+        #         "_input/sample_data/algorithm/src/drowsy_detection/core/eye_state.py"
+        #     ],
+        #     evaluation_spec_md="_input/sample_data/evaluation_engine/docs/EVALUATION_SPEC.md",
+        #     evaluation_code_files=[
+        #         "_input/sample_data/evaluation_engine/main.py"
+        #     ],
+        #     expected_result="フレーム区間36-136の間に「連続閉眼あり」が存在すること"
+        # )
+
         dataset = DatasetInfo(
-            id="test_dataset_001",
-            algorithm_output_csv="_input/sample_data/アルゴリズム出力結果/4.csv",
-            core_output_csv="_input/sample_data/コアライブラリ出力結果/WIN_20250819_10_16_17_Pro_analysis.csv",
+            id="test_dataset_002",
+            algorithm_output_csv="_input/sample_data/アルゴリズム出力結果/2.csv",
+            core_output_csv="_input/sample_data/コアライブラリ出力結果/WIN_20250819_10_12_55_Pro_analysis.csv",
             algorithm_spec_md="_input/sample_data/algorithm/01_algorithm_specification/AS_drowsy_detection.md",
             algorithm_code_files=[
                 "_input/sample_data/algorithm/src/drowsy_detection/core/drowsy_detetector.py",
@@ -108,7 +124,7 @@ def test_dataset_creation():
             evaluation_code_files=[
                 "_input/sample_data/evaluation_engine/main.py"
             ],
-            expected_result="フレーム区間36-136の間に「連続閉眼あり」が存在すること"
+            expected_result="フレーム区間465-593の間に「連続閉眼あり」が存在すること"
         )
 
         print("✓ Dataset created successfully")
