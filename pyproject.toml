@@ -1,9 +1,40 @@
 [project]
 name = "ai-analysis-engine"
-version = "0.1.0"
-description = "時系列処理アルゴリズムの課題分析システム - AIを用いた自動分析プラットフォーム"
+version = "1.0.0"
+description = "汎用AI分析エンジンライブラリ - 時系列データ分析の自動化プラットフォーム"
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
+authors = [
+    {name = "AI Analysis Engine Team", email = "team@ai-analysis-engine.com"},
+]
+maintainers = [
+    {name = "AI Analysis Engine Team", email = "team@ai-analysis-engine.com"},
+]
+keywords = [
+    "ai",
+    "analysis",
+    "machine-learning",
+    "data-analysis",
+    "time-series",
+    "algorithm-evaluation",
+    "automation",
+    "langchain",
+    "langgraph"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "langgraph>=0.1.0",
     "langchain>=0.2.0",
@@ -21,9 +52,94 @@ dependencies = [
     "pyyaml>=6.0.2",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio",
+    "pytest-cov",
+    "black",
+    "isort",
+    "mypy",
+    "flake8",
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme",
+    "myst-parser",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/ai-analysis-engine"
+Documentation = "https://ai-analysis-engine.readthedocs.io/"
+Repository = "https://github.com/your-org/ai-analysis-engine.git"
+Issues = "https://github.com/your-org/ai-analysis-engine/issues"
+Changelog = "https://github.com/your-org/ai-analysis-engine/blob/main/CHANGELOG.md"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/ai_analysis_engine"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.*",
+    "/docs/_build",
+    "/tests",
+    "/scripts",
+    "/*.md",
+    "!/README.md",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ai_analysis_engine*"]
+
+[tool.setuptools.package-data]
+ai_analysis_engine = ["*.txt", "*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--tb=short",
+    "--cov=ai_analysis_engine",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["ai_analysis_engine"]
+skip = ["__init__.py"]

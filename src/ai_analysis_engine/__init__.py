@@ -1,13 +1,47 @@
 """
-時系列処理アルゴリズムの課題分析システム
+AI分析エンジンライブラリ - 時系列データ分析の自動化プラットフォーム
 
-AIを用いた自動分析プラットフォーム
+上位システム統合向けのシンプルで使いやすいAPIを提供
 """
 
-from .main import AIAnalysisEngine
-from .config import config
+from .library_api import AIAnalysisEngine
+from .config.library_config import AnalysisConfig
+from .models.result import AnalysisResult, Hypothesis, AnalysisMetrics
+from .exceptions import (
+    AIAnalysisError,
+    ConfigurationError,
+    ValidationError,
+    AnalysisError,
+    TimeoutError,
+    ResourceError,
+    InitializationError
+)
 
-__version__ = "0.1.0"
+# 後方互換性のためのインポート
+from .main import AIAnalysisEngine as _InternalEngine
+from .config import config as _internal_config
+
+__version__ = "1.0.0"
 __author__ = "AI Analysis Engine Team"
 
-__all__ = ["AIAnalysisEngine", "config"]
+__all__ = [
+    # メインAPI
+    "AIAnalysisEngine",
+    "AnalysisConfig",
+    "AnalysisResult",
+    "Hypothesis",
+    "AnalysisMetrics",
+
+    # 例外クラス
+    "AIAnalysisError",
+    "ConfigurationError",
+    "ValidationError",
+    "AnalysisError",
+    "TimeoutError",
+    "ResourceError",
+    "InitializationError",
+
+    # 後方互換性
+    "_InternalEngine",
+    "_internal_config"
+]
