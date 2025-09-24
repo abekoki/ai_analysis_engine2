@@ -30,6 +30,15 @@ def setup_as_independent_package(target_path: str):
     print(f"📁 ライブラリをコピー: {source_lib} -> {target_lib}")
     shutil.copytree(source_lib, target_lib, ignore=ignore_pycache)
 
+    # 2.5. docsフォルダをinstant_analysisフォルダーにコピー
+    source_docs = Path(__file__).parent.parent / "docs"
+    if source_docs.exists():
+        target_docs = target_dir / "instant_analysis"
+        print(f"📁 ドキュメントをコピー: {source_docs} -> {target_docs}")
+        shutil.copytree(source_docs, target_docs, ignore=ignore_pycache)
+    else:
+        print("⚠️  docsフォルダが見つからないためスキップ")
+
     # 3. pyproject.tomlを作成
     pyproject_content = '''[project]
 name = "ai-analysis-engine"
@@ -140,11 +149,12 @@ if __name__ == "__main__":
 
     target_path = sys.argv[1]
     if setup_as_independent_package(target_path):
-        print("
-🎉 パッケージ作成完了!"        print(f"📁 パッケージディレクトリ: {target_path}")
-        print("📝 次に行うこと:"        print("   1. cd {target_path}")
+        print("🎉 パッケージ作成完了!" )
+        print(f"📁 パッケージディレクトリ: {target_path}")
+        print("📝 次に行うこと:")
+        print("   1. cd {target_path}")
         print("   2. pip install -e .")
-        print("   3. python example.py"
+        print("   3. python example.py")
     else:
         print("❌ パッケージ作成失敗")
         sys.exit(1)
